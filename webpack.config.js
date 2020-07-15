@@ -5,7 +5,12 @@ const TerserJSPlugin = require('terser-webpack-plugin');
 const FixStyleOnlyEntriesPlugin = require("webpack-fix-style-only-entries");
 const RemovePlugin = require('remove-files-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
+const cssVariables = require( 'postcss-css-variables-extract' );
+const fs = require( 'fs' );
+const collectVarUsages = require( 'postcss-css-variables-extract/lib/scss-var-usages' );
+const mergeVarUsages = require( 'postcss-css-variables-extract/lib/merge-var-usages' );
 
+const allCssVars = {};
 const icons_config = {
   shape: {
     dimension: {
@@ -54,9 +59,10 @@ module.exports = {
             loader: 'postcss-loader',
             options: {
               ident: 'postcss',
-              plugins: function() {
-                return require('autoprefixer');
-              },
+              plugins: () => [
+                 cssVariables( { preserve: true, exportVarUsagesTo: allCssVars } ),
+                 require('autoprefixer'),
+              ],
               sourceMap: true,
             }
           },
@@ -113,7 +119,25 @@ module.exports = {
     }),
     new SpriteLoaderPlugin({
       plainSprite: true
-    })
+    }),
+    {
+      apply: ( compiler ) => {
+        compiler.hooks.done.tap( 'DoneWriteCssVars', ( ) => {
+          // We use postcss to get the selector and resolved default value. For the original file and line number
+          // we use a separate scripts which loops through all scss files. Only variables that are in the final css
+          // are included.
+          const scssUsages = collectVarUsages( './assets/src' );
+          // console.log( 'CSS', allCssVars );
+          // console.log( 'sass', scssUsages );
+          const mergedUsages = mergeVarUsages( allCssVars, scssUsages );
+          fs.writeFile(
+            './assets/build/css_vars_merged.json',
+            JSON.stringify( mergedUsages, null, 2 ),
+            err => console.log( err )
+          );
+        } );
+      }
+    }
   ],
   optimization: {
     ...defaultConfig.optimization,
