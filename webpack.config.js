@@ -133,7 +133,7 @@ module.exports = {
           fs.writeFile(
             './assets/build/css_vars_merged.json',
             JSON.stringify( mergedUsages, null, 2 ),
-            err => console.log( err )
+            console.log
           );
         } );
       }
