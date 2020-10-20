@@ -6,8 +6,7 @@ workflows:
     jobs:
       - php72-tests
       - php73-tests
-      - acceptance-tests:
-          context: org-global
+      - acceptance-tests
       - a11y-tests:
           context: org-global
       - create-release-zip:
@@ -97,7 +96,6 @@ commands:
       - run:
           name: Build - Configure
           command: |
-            activate-gcloud-account.sh
             mkdir -p /tmp/workspace/var
             mkdir -p /tmp/workspace/src
             echo "${CIRCLE_BUILD_NUM}" > /tmp/workspace/var/circle-build-num
