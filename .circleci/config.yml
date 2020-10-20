@@ -110,7 +110,7 @@ commands:
             PLUGIN_GUTENBERG_BLOCKS_BRANCH=dev-master \
             MERGE_SOURCE=git@github.com:greenpeace/planet4-base-fork.git \
             MERGE_REF=develop \
-            make
+            make ci
       - run:
           name: Test - Clone planet4-docker-compose
           command: |
