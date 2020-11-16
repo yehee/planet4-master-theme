@@ -22,6 +22,10 @@ class Context {
 		$context['header_button_link']          = $page_meta_data['p4_button_link'] ?? '';
 		$context['header_button_link_checkbox'] = $page_meta_data['p4_button_link_checkbox'] ?? '';
 		$context['hide_page_title_checkbox']    = $page_meta_data['p4_hide_page_title_checkbox'] ?? '';
+
+		$css_vars_json = planet4_get_option( Features::THEME_JSON, '' );
+		$context['css_vars_json'] = $css_vars_json;
+		$context['css_vars'] = json_decode(  $css_vars_json, true );
 	}
 
 	/**

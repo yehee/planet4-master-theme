@@ -19,6 +19,8 @@ class Features {
 
 	public const ENGAGING_NETWORKS = 'feature_engaging_networks';
 
+	public const THEME_JSON = 'theme_json';
+
 	/**
 	 * Get the features options page settings.
 	 *
@@ -80,6 +82,15 @@ class Features {
 				),
 				'id'   => self::ENGAGING_NETWORKS,
 				'type' => 'checkbox',
+			],
+			[
+				'name' => __( 'Theme JSON', 'planet4-master-theme-backend' ),
+				'desc' => __(
+					'JSON entered here will be added as CSS variables.',
+					'planet4-master-theme-backend'
+				),
+				'id'   => self::THEME_JSON,
+				'type' => 'textarea',
 			],
 		];
 	}

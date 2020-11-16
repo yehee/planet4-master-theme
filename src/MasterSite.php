@@ -1098,6 +1098,7 @@ class MasterSite extends TimberSite {
 	 * Add callback function to Gutenberg core/image block.
 	 */
 	public function p4_register_core_image_block() {
+		unregister_block_type('core/image');
 		register_block_type(
 			'core/image',
 			[ 'render_callback' => [ $this, 'p4_core_image_block_render' ] ]

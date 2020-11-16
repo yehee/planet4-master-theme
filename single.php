@@ -10,6 +10,7 @@
  */
 
 use P4\MasterTheme\Context;
+use P4\MasterTheme\Features;
 use P4\MasterTheme\Post;
 use Timber\Timber;
 
@@ -55,6 +56,9 @@ $context['social_accounts']     = $post->get_social_accounts( $context['footer_s
 $context['page_category']       = 'Post Page';
 $context['post_tags']           = implode( ', ', $post->tags() );
 
+$css_vars_json = planet4_get_option( Features::THEME_JSON, '' );
+$context['css_vars_json'] = $css_vars_json;
+$context['css_vars'] = json_decode( $css_vars_json, true );
 Context::set_og_meta_fields( $context, $post );
 Context::set_campaign_datalayer( $context, $page_meta_data );
 

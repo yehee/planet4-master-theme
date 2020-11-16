@@ -1,7 +1,11 @@
 <style>
 	:root {
 		{% for key, value in css_vars %}
-			--{{ key }}: {{ value }};
+			{{ key }}: {{ value }};
 		{% endfor %}
 	}
 </style>
+
+<script>
+	window.p4theme={{ css_vars_json|raw }};
+</script>
