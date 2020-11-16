@@ -672,7 +672,7 @@ class MasterSite extends TimberSite {
 		wp_enqueue_style( 'slick', 'https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.css', [], '1.9.0' );
 
 		// This loads a linked style file since the relative images paths are outside the build directory.
-		wp_enqueue_style( 'parent-style', $this->theme_dir . '/assets/build/style.min.css', [], $css_creation );
+		wp_enqueue_style( 'parent-style', $this->theme_dir . '/assets/build/style.min.css?' . time(), [], $css_creation );
 
 		// JS files.
 		wp_register_script( 'jquery', 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js', [], '3.3.1', true );
@@ -686,7 +686,16 @@ class MasterSite extends TimberSite {
 			'show_scroll_times' => Search::SHOW_SCROLL_TIMES,
 		];
 
-		wp_register_script( 'main', $this->theme_dir . '/assets/build/index.js', [ 'jquery', 'cssvarsponyfill' ], $js_creation, true );
+		wp_register_script(
+			'main',
+			$this->theme_dir . '/assets/build/index.js',
+			[
+				'jquery',
+				'cssvarsponyfill',
+			],
+			$js_creation,
+			true
+		);
 		wp_localize_script( 'main', 'localizations', $localized_variables );
 		wp_enqueue_script( 'main' );
 

@@ -1,0 +1,33 @@
+{
+    "short_name": "Planet 4",
+    "name": "Greenpeace Planet 4",
+    "description": "Greenpeace Engagement Platform",
+    "icons": [
+      {
+        "src": "/wp-content/themes/planet4-master-theme/images/p4icon.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ],
+    "start_url": "/?source=pwa",
+    "background_color": "#3367D6",
+    "display": "standalone",
+    "scope": "/",
+    "theme_color": "#3367D6",
+    "shortcuts": [
+      {
+        "name": "Act",
+        "short_name": "Act",
+        "description": "Act on something",
+        "url": "/act/",
+        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4icon.png", "sizes": "512x512" }]
+      },
+      {
+        "name": "Explore",
+        "short_name": "Explore",
+        "description": "Explore something",
+        "url": "/explore/",
+        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4icon.png", "sizes": "512x512" }]
+      }
+    ]
+  }
