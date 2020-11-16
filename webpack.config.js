@@ -5,6 +5,7 @@ const TerserJSPlugin = require('terser-webpack-plugin');
 const FixStyleOnlyEntriesPlugin = require("webpack-fix-style-only-entries");
 const RemovePlugin = require('remove-files-webpack-plugin');
 const SpriteLoaderPlugin = require('svg-sprite-loader/plugin');
+const dashDash = require('@greenpeace/dashdash')
 const cssVariables = require( 'postcss-css-variables-extract' );
 const fs = require( 'fs' );
 const collectVarUsages = require( 'postcss-css-variables-extract/lib/scss-var-usages' );
@@ -60,6 +61,7 @@ module.exports = {
             options: {
               ident: 'postcss',
               plugins: () => [
+                dashDash(),
                  cssVariables( { preserve: true, exportVarUsagesTo: allCssVars } ),
                  require('autoprefixer'),
               ],
