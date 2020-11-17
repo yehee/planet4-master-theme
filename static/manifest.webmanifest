@@ -9,7 +9,7 @@
         "sizes": "512x512"
       }
     ],
-    "start_url": "/?source=pwa",
+    "start_url": "/",
     "background_color": "#3367D6",
     "display": "standalone",
     "scope": "/",
@@ -20,14 +20,14 @@
         "short_name": "Act",
         "description": "Act on something",
         "url": "/act/",
-        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4icon.png", "sizes": "512x512" }]
+        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4-act.svg", "sizes": "512x512" }]
       },
       {
         "name": "Explore",
         "short_name": "Explore",
-        "description": "Explore something",
+        "description": "Explore Planet 4",
         "url": "/explore/",
-        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4icon.png", "sizes": "512x512" }]
+        "icons": [{ "src": "/wp-content/themes/planet4-master-theme/images/p4-explore.png", "sizes": "512x512" }]
       }
     ]
   }
