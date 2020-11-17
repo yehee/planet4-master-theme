@@ -32,7 +32,7 @@ class Activator {
 		// Temporary PWA sample code
 		$theme_dir = get_template_directory_uri();
 		$public_dir = $theme_dir . '/../../../';
-		copy($theme_dir . '/static/sw.js', $public_dir . '/sw.js')l
+		copy($theme_dir . '/static/sw.js', $public_dir . '/sw.js');
 	}
 
 }
