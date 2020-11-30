@@ -198,6 +198,15 @@ class MasterSite extends TimberSite {
 
 		// Pin the ElasticPress to v3.4 search algorithm.
 		simple_value_filter( 'ep_search_algorithm_version', '3.4' );
+
+		// Frontend styles in editor
+		$this->setEditorStyles();
+	}
+
+	private function setEditorStyles(): void {
+		add_theme_support( 'editor-styles' );
+		add_editor_style( $this->theme_dir . '/assets/build/bootstrap.min.css' );
+		add_editor_style( $this->theme_dir . '/assets/build/style.min.css' );
 	}
 
 	/**
