@@ -4,10 +4,8 @@ version: 2.1
 workflows:
   main:
     jobs:
-      - php72-tests
-      - php73-tests
-      - acceptance-tests
-      - a11y-tests
+      - test-instance:
+          context: org-global
       - create-release-zip:
           context: org-global
           filters:
@@ -204,6 +202,19 @@ jobs:
             make -C planet4-docker-compose ci-extract-a11y-artifacts
             errors=$(jq '.errors' planet4-docker-compose/artifacts/pa11y/pa11y-ci-results.json)
             if [ "$errors" -gt 0 ]; then echo "$errors errors found, see report in artifacts."; else echo "No errors, report available in artifacts."; fi
+
+  test-instance:
+    docker:
+      - image: greenpeaceinternational/p4-builder:latest
+        auth: &docker_auth
+    steps:
+      - run:
+          name: "Check if this is for an open PR."
+          command: |
+            echo $CIRCLE_PULL_REQUEST
+#      - run:
+#          name: ""
+#          command: rm -rf .circleci .git .githooks assets/src bin tests
 
   create-release-zip:
     docker:
