@@ -101,7 +101,13 @@
 		{% endfor %}
 	{% endif %}
 
-
+	<script>
+		var varsSupported = window.CSS && CSS.supports('color', 'var(--fake-var)');
+		if (!varsSupported) {
+			var lib = 'https://cdnjs.cloudflare.com/ajax/libs/css-vars-ponyfill/2.3.1/css-vars-ponyfill.min.js';
+			document.write('<script onload="cssVars()" src="' + lib + '"><' + '/script>');
+		}
+	</script>
 	{{ wp_head }}
 
 	{% if preconnect_domains %}

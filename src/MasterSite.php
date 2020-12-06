@@ -683,7 +683,6 @@ class MasterSite extends TimberSite {
 
 		// JS files.
 		wp_register_script( 'jquery', 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js', [], '3.3.1', true );
-		wp_register_script( 'cssvarsponyfill', 'https://cdnjs.cloudflare.com/ajax/libs/css-vars-ponyfill/2.3.1/css-vars-ponyfill.min.js', [], '2', false );
 
 		// Variables reflected from PHP to the JS side.
 		$localized_variables = [
