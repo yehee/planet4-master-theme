@@ -158,15 +158,11 @@ jobs:
     docker:
       - image: greenpeaceinternational/p4-unit-tests:php7.2-develop
         auth: &docker_auth
-      - image: *mysql_image
-        auth: &docker_auth
 
   php73-tests:
     <<: *php_job
     docker:
       - image: greenpeaceinternational/p4-unit-tests:php7.3-develop
-        auth: &docker_auth
-      - image: *mysql_image
         auth: &docker_auth
 
   acceptance-tests:
