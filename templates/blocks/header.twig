@@ -1,5 +1,233 @@
 {% if ( header_title ) %}
 	<div class="skewed-overlay"></div>
+	<div class="background-samples">
+		<button data-class="option-current" class="btn btn-primary">Current</button>
+		<button data-class="option-mask-no-skew" class="btn btn-primary">Mask, no skew</button>
+		<button data-class="option-blur" class="btn btn-primary">Mask, blurred</button>
+		<button data-class="option-blur-opacity" class="btn btn-primary">Skew, blurr, opacity</button>
+		<button data-class="option-short-masked" class="btn btn-primary">Short, masked</button>
+		<button data-class="option-short-unmasked" class="btn btn-primary">Short, unmasked</button>
+		<button data-class="option-extreme-makeover" class="btn btn-primary">Extreme Makeover</button>
+
+		<span class="parallax-check">
+			<label class="custom-control">
+				<input
+					type="checkbox"
+					name="parallax"
+					class="p4-custom-control-input modal-checkbox parallax-check-input" />
+				<span class="custom-control-description">
+					<img src="/wp-content/themes/planet4-master-theme/images/allthethings.png" height="30" />
+				</span>
+			</label>
+		</span>
+	</div>
+	<script type="text/javascript">
+		const buttons = document.querySelectorAll('.background-samples button');
+
+		const removeClasses = () => {
+			buttons.forEach(button => document.body.classList.remove(button.dataset.class));
+		}
+
+		buttons.forEach((button) => {
+			button.addEventListener('click', e => {
+				removeClasses();
+				document.body.classList.add(e.target.dataset.class);
+			});
+		})
+
+		function throttle(fn, wait) {
+			var time = Date.now();
+			return function() {
+				if ((time + wait - Date.now()) < 0) {
+					fn();
+					time = Date.now();
+				}
+			}
+		};
+
+		function parallax() {
+			var scrolled = window.pageYOffset;
+			var parallax = document.querySelector(".page-header-image");
+			var container = document.querySelector(".page-header-background");
+			var allTheThings = document.querySelector(".parallax-check-input").checked;
+
+			if (!allTheThings){
+				if (!document.body.classList.contains('option-extreme-makeover')) {
+					parallax.style.transform = '';
+					return;
+				}
+				if (scrolled > container.offsetHeight) {
+					return;
+				}
+			}
+
+			// 0.5 is a speed multiplier
+			var coords = (scrolled * 0.5) + 'px'
+			parallax.style.transform = 'translate3d(0, ' + coords + ', 0)';
+		};
+
+		{# scrollIntervalID = setInterval(() => {
+			window.requestAnimationFrame(parallax);
+		}, 10); #}
+		window.addEventListener('scroll',  function() {
+			window.requestAnimationFrame(parallax);
+		});
+	</script>
+	<style>
+		.background-samples {
+			position: fixed;
+			z-index: 900000;
+			right: 0px;
+			bottom: 0px;
+			width: 100%;
+			background: rgba(0,0,0,.8);
+			padding: 10px;
+		}
+
+		.parallax-check {
+			display: inline-block;
+			padding: 5px;
+		}
+
+		.parallax-check .custom-control-description {
+			color: white !important;
+			padding-inline-start: 25px !important;
+		}
+
+		.background-samples .btn {
+			padding: 8px;
+			line-height: 1;
+		}
+
+		body.option-mask-no-skew .skewed-overlay {
+			display: none;
+		}
+
+		body.option-short-masked .skewed-overlay {
+			display: none;
+		}
+
+		.page-header-background {
+			overflow: hidden;
+		}
+
+		body.option-short-masked .page-header-background {
+			height: 300px;
+			overflow: hidden;
+		}
+
+		body.option-blur .skewed-overlay {
+			display: none;
+		}
+
+		body.option-blur .page-header-background {
+			filter: blur(20px);
+			overflow: hidden;
+		}
+
+		body.option-blur .skewed-overlay {
+			display: none;
+		}
+
+		body.option-blur-opacity .page-header-background {
+			filter: blur(20px);
+			overflow: hidden;
+		}
+
+		body.option-short-unmasked .skewed-overlay {
+			display: none;
+		}
+
+		body.option-short-unmasked .page-header {
+			padding-bottom: 24px;
+			overflow: hidden;
+		}
+
+		body.option-short-unmasked .page-header-background {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		body.option-short-unmasked .page-header-background:after {
+			display: none !important;
+		}
+
+		body.option-extreme-makeover .skewed-overlay {
+			display: none;
+		}
+
+		body.option-extreme-makeover .page-header {
+			padding-top: 176px;
+			padding-bottom: 36px;
+			overflow: hidden;
+		}
+
+		body.option-extreme-makeover .page-header-background {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		body.option-extreme-makeover .page-header-background:after {
+			height: 100%;
+			background: rgba(0,0,0,.5);
+		}
+
+		body.option-extreme-makeover .page-header .tag-item.tag-item--main {
+			background: #6c0;
+			padding: 4px 10px;
+			display: inline-block;
+			box-shadow: 0 1px 3px gray;
+			border: 1px solid rgba(255,255,255,.5);
+			color: white;
+			text-shadow: 0 1px 1px black;
+			border-radius: 4px;
+		}
+
+		body.option-extreme-makeover .page-header .tag-item.tag {
+			background: white;
+			padding: 4px 10px;
+			display: inline-block;
+			border-radius: 4px;
+			color: black;
+			box-shadow: 0 1px 3px gray;
+		}
+
+		body.option-extreme-makeover .page-header h1.page-header-title {
+			color: white;
+			text-shadow: 0 2px 2px black;
+		}
+
+		body.option-extreme-makeover .share-buttons .share-btn {
+			line-height: 50px;
+			border-radius: 50px;
+			height: 50px;
+			width: 50px;
+			border: 1px solid rgba(255,255,255,.25);
+			box-shadow: 0 1px 4px rgba(0,0,0,.75);
+			font-size: 1.6rem !important;
+		}
+
+		body.option-extreme-makeover .share-buttons .share-btn.whatsapp {
+			font-size: 1.8rem !important;
+		}
+
+		body.option-extreme-makeover .share-buttons .share-btn .icon {
+			top: -4px;
+		}
+
+		body.option-extreme-makeover .page-header .tag-wrap::before {
+			display: none !important;
+		}
+
+		body.option-extreme-makeover .page-header .tag-wrap.issues {
+			margin-right: 8px;
+		}
+
+		body.option-extreme-makeover .page-header-btn {
+			margin: 0 0 0 -15px;
+		}
+	</style>
+
 	{% set page_header_show = ( header_subtitle or header_description or hide_page_title_checkbox != 'on' )  %}
 	<div class="page-header {% if not page_header_show %}page-header-hidden{% endif %}">
 		{% if ( background_image ) %}
@@ -7,8 +235,8 @@
 				<img src="{{ background_image }}"
 					{% if ( background_image_srcset ) %}
 						srcset="{{ background_image_srcset }}"
-					 {% endif %}
-					 class="page-header-image" />
+					{% endif %}
+					class="page-header-image" />
 			</div>
 		{% endif %}
 		<div class="container">
