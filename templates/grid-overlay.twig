@@ -1,0 +1,64 @@
+<style type="text/css">
+	.grid-overlay {
+    display: none;
+    pointer-events: none;
+    z-index: 99999999;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .grid-overlay.grid-overlay-visible {
+    display: block;
+  }
+
+  .grid-overlay div[class^="col-"] {
+    border-left: 2px dotted rgba(0, 0, 0, 0.1);
+    border-right: 2px dotted rgba(0, 0, 0, 0.1);
+  }
+
+  .grid-overlay div[class^="col-"] h1 {
+    background-color: rgba(255, 0, 0, 0.1);
+    height: 100vh;
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+</style>
+<div class="grid-overlay">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+      <div class="col-md-1">
+        <h1 /></div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  document.addEventListener('keyup', e => {
+    if (e.ctrlKey && e.key === 'g') {
+      document.querySelector('.grid-overlay').classList.toggle('grid-overlay-visible');
+    }
+  })
+</script>
