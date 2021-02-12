@@ -16,6 +16,10 @@ class Features {
 
 	public const CLOUDFLARE_DEPLOY_PURGE = 'cloudflare_deploy_purge';
 
+	public const RENDER_IN_HEAD = 'render_in_head';
+
+	public const NO_PONYFILL = 'no_ponyfill';
+
 	/**
 	 * Get the features options page settings.
 	 *
@@ -64,6 +68,24 @@ class Features {
 					'planet4-master-theme-backend'
 				),
 				'id'   => self::CLOUDFLARE_DEPLOY_PURGE,
+				'type' => 'checkbox',
+			],
+			[
+				'name' => __( 'Render in head', 'planet4-master-theme-backend' ),
+				'desc' => __(
+					'Attempt to mitigate GTM e.a. render blocking.',
+					'planet4-master-theme-backend'
+				),
+				'id'   => self::RENDER_IN_HEAD,
+				'type' => 'checkbox',
+			],
+			[
+				'name' => __( 'Disable ponyfill', 'planet4-master-theme-backend' ),
+				'desc' => __(
+					'Disable loading of CSS variables ponyfill (breaks IE and Opera).',
+					'planet4-master-theme-backend'
+				),
+				'id'   => self::NO_PONYFILL,
 				'type' => 'checkbox',
 			],
 		];
