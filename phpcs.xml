@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ruleset name="WordPress Coding Standards for Plugins">
+  <description>Generally-applicable sniffs for WordPress plugins</description>
+
+  <config name="encoding" value="utf-8"/>
+  <arg name="extensions" value="php"/>
+  <!-- Show progress and sniff codes in all reports -->
+  <arg value="ps"/>
+
+  <rule ref="PSR12"/>
+  <rule ref="WordPress-Docs"/>
+
+  <!-- Deprecated WP features -->
+  <!-- <config name="minimum_supported_wp_version" value="5.4"/> -->
+  <rule ref="WordPress.WP.DeprecatedFunctions"/>
+	<rule ref="WordPress.WP.DeprecatedClasses"/>
+	<rule ref="WordPress.WP.DeprecatedParameters"/>
+	<rule ref="WordPress.WP.DeprecatedParameterValues"/>
+
+  <!-- Tabs vs Space war -->
+  <rule ref="Generic.WhiteSpace.DisallowSpaceIndent"/>
+  <rule ref="Generic.WhiteSpace.DisallowTabIndent">
+    <exclude name="Generic.WhiteSpace.DisallowTabIndent.TabsUsed"/>
+  </rule>
+  <rule ref="Generic.Files.LineLength">
+    <properties>
+      <property name="lineLimit" value="110"/>
+      <property name="absoluteLineLimit" value="120"/>
+    </properties>
+  </rule>
+
+  <!-- Add rule for theme's textdomains -->
+  <rule ref="WordPress.WP.I18n">
+    <properties>
+      <property name="text_domain" type="array" value="planet4-master-theme,planet4-master-theme-backend"/>
+    </properties>
+  </rule>
+
+  <!-- All files in src are classes so already have a required comment before the declaration. The rule also forced
+  to include an @package annotation, which is redundant if there is a namespace. -->
+  <rule ref="Squiz.Commenting.FileComment">
+    <exclude-pattern>src/*</exclude-pattern>
+  </rule>
+
+  <exclude-pattern>*/node_modules/*</exclude-pattern>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+</ruleset>
