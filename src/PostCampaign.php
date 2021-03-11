@@ -5,7 +5,8 @@ namespace P4\MasterTheme;
 /**
  * Class P4\MasterTheme\PostCampaign
  */
-class PostCampaign {
+class PostCampaign
+{
 
 	/**
 	 * Post Type
@@ -33,22 +34,23 @@ class PostCampaign {
 	/**
 	 * Taxonomy_Image constructor.
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 		$this->hooks();
 	}
 
 	/**
 	 * Class hooks.
 	 */
-	private function hooks() {
-		add_action( 'init', [ $this, 'register_campaigns_cpt' ] );
-		add_action( 'cmb2_admin_init', [ $this, 'register_campaigns_metaboxes' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
-		add_action( 'cmb2_render_sidebar_link', [ $this, 'cmb2_render_sidebar_link_field_callback' ], 10, 5 );
-		add_action( 'cmb2_render_footer_icon_link', [ $this, 'cmb2_render_footer_icon_link_field_callback' ], 10, 5 );
+	private function hooks()
+	{
+		add_action('init', [ $this, 'register_campaigns_cpt' ]);
+		add_action('cmb2_admin_init', [ $this, 'register_campaigns_metaboxes' ]);
+		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ]);
+		add_action('cmb2_render_sidebar_link', [ $this, 'cmb2_render_sidebar_link_field_callback' ], 10, 5);
+		add_action('cmb2_render_footer_icon_link', [ $this, 'cmb2_render_footer_icon_link_field_callback' ], 10, 5);
 
-		add_filter( 'get_user_option_edit_campaign_per_page', [ $this, 'set_default_items_per_page' ], 10, 3 );
-
+		add_filter('get_user_option_edit_campaign_per_page', [ $this, 'set_default_items_per_page' ], 10, 3);
 	}
 
 	/**
@@ -60,8 +62,9 @@ class PostCampaign {
 	 *
 	 * @return int The amount of pages that will be used.
 	 */
-	public function set_default_items_per_page( $result, $option, $user ) {
-		if ( (int) $result < 1 ) {
+	public function set_default_items_per_page($result, $option, $user)
+	{
+		if ((int) $result < 1) {
 			return 200;
 		}
 
@@ -71,28 +74,29 @@ class PostCampaign {
 	/**
 	 * Register campaigns cpt
 	 */
-	public function register_campaigns_cpt() {
+	public function register_campaigns_cpt()
+	{
 
 		$labels = [
-			'name'               => _x( 'Campaigns', 'post type general name', 'planet4-master-theme-backend' ),
-			'singular_name'      => _x( 'Campaign', 'post type singular name', 'planet4-master-theme-backend' ),
-			'menu_name'          => _x( 'Campaigns', 'admin menu', 'planet4-master-theme-backend' ),
-			'name_admin_bar'     => _x( 'Campaign', 'add new on admin bar', 'planet4-master-theme-backend' ),
-			'add_new'            => _x( 'Add New', 'campaign', 'planet4-master-theme-backend' ),
-			'add_new_item'       => __( 'Add New Campaign', 'planet4-master-theme-backend' ),
-			'new_item'           => __( 'New Campaign', 'planet4-master-theme-backend' ),
-			'edit_item'          => __( 'Edit Campaign', 'planet4-master-theme-backend' ),
-			'view_item'          => __( 'View Campaign', 'planet4-master-theme-backend' ),
-			'all_items'          => __( 'All Campaigns', 'planet4-master-theme-backend' ),
-			'search_items'       => __( 'Search Campaigns', 'planet4-master-theme-backend' ),
-			'parent_item_colon'  => __( 'Parent Campaign:', 'planet4-master-theme-backend' ),
-			'not_found'          => __( 'No campaigns found.', 'planet4-master-theme-backend' ),
-			'not_found_in_trash' => __( 'No campaigns found in Trash.', 'planet4-master-theme-backend' ),
+			'name'               => _x('Campaigns', 'post type general name', 'planet4-master-theme-backend'),
+			'singular_name'      => _x('Campaign', 'post type singular name', 'planet4-master-theme-backend'),
+			'menu_name'          => _x('Campaigns', 'admin menu', 'planet4-master-theme-backend'),
+			'name_admin_bar'     => _x('Campaign', 'add new on admin bar', 'planet4-master-theme-backend'),
+			'add_new'            => _x('Add New', 'campaign', 'planet4-master-theme-backend'),
+			'add_new_item'       => __('Add New Campaign', 'planet4-master-theme-backend'),
+			'new_item'           => __('New Campaign', 'planet4-master-theme-backend'),
+			'edit_item'          => __('Edit Campaign', 'planet4-master-theme-backend'),
+			'view_item'          => __('View Campaign', 'planet4-master-theme-backend'),
+			'all_items'          => __('All Campaigns', 'planet4-master-theme-backend'),
+			'search_items'       => __('Search Campaigns', 'planet4-master-theme-backend'),
+			'parent_item_colon'  => __('Parent Campaign:', 'planet4-master-theme-backend'),
+			'not_found'          => __('No campaigns found.', 'planet4-master-theme-backend'),
+			'not_found_in_trash' => __('No campaigns found in Trash.', 'planet4-master-theme-backend'),
 		];
 
 		$args = [
 			'labels'             => $labels,
-			'description'        => __( 'Campaigns', 'planet4-master-theme-backend' ),
+			'description'        => __('Campaigns', 'planet4-master-theme-backend'),
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'            => true,
@@ -123,21 +127,22 @@ class PostCampaign {
 			],
 		];
 
-		register_post_type( self::POST_TYPE, $args );
+		register_post_type(self::POST_TYPE, $args);
 
-		foreach ( self::META_FIELDS as $field ) {
-			self::campaign_field( $field );
+		foreach (self::META_FIELDS as $field) {
+			self::campaign_field($field);
 		}
 	}
 
 	/**
 	 * Register Color Picker Metabox for navigation
 	 */
-	public function register_campaigns_metaboxes() {
+	public function register_campaigns_metaboxes()
+	{
 		$cmb = new_cmb2_box(
 			[
 				'id'           => 'campaign_nav_settings_mb',
-				'title'        => __( 'Page Design', 'planet4-master-theme-backend' ),
+				'title'        => __('Page Design', 'planet4-master-theme-backend'),
 				'object_types' => [
 					'campaign',
 				],
@@ -156,7 +161,7 @@ class PostCampaign {
 
 		$cmb->add_field(
 			[
-				'name' => __( 'Footer item 1', 'planet4-master-theme-backend' ),
+				'name' => __('Footer item 1', 'planet4-master-theme-backend'),
 				'id'   => 'campaign_footer_item1',
 				'type' => 'footer_icon_link',
 			]
@@ -164,7 +169,7 @@ class PostCampaign {
 
 		$cmb->add_field(
 			[
-				'name' => __( 'Footer item 2', 'planet4-master-theme-backend' ),
+				'name' => __('Footer item 2', 'planet4-master-theme-backend'),
 				'id'   => 'campaign_footer_item2',
 				'type' => 'footer_icon_link',
 			]
@@ -172,7 +177,7 @@ class PostCampaign {
 
 		$cmb->add_field(
 			[
-				'name' => __( 'Footer item 3', 'planet4-master-theme-backend' ),
+				'name' => __('Footer item 3', 'planet4-master-theme-backend'),
 				'id'   => 'campaign_footer_item3',
 				'type' => 'footer_icon_link',
 			]
@@ -180,7 +185,7 @@ class PostCampaign {
 
 		$cmb->add_field(
 			[
-				'name' => __( 'Footer item 4', 'planet4-master-theme-backend' ),
+				'name' => __('Footer item 4', 'planet4-master-theme-backend'),
 				'id'   => 'campaign_footer_item4',
 				'type' => 'footer_icon_link',
 			]
@@ -188,7 +193,7 @@ class PostCampaign {
 
 		$cmb->add_field(
 			[
-				'name' => __( 'Footer item 5', 'planet4-master-theme-backend' ),
+				'name' => __('Footer item 5', 'planet4-master-theme-backend'),
 				'id'   => 'campaign_footer_item5',
 				'type' => 'footer_icon_link',
 			]
@@ -198,14 +203,15 @@ class PostCampaign {
 	/**
 	 * Load assets.
 	 */
-	public function enqueue_admin_assets() {
+	public function enqueue_admin_assets()
+	{
 		wp_register_style(
 			'cmb-style',
 			get_template_directory_uri() . '/admin/css/campaign.css',
 			[],
-			Loader::theme_file_ver( 'admin/css/campaign.css' )
+			Loader::theme_file_ver('admin/css/campaign.css')
 		);
-		wp_enqueue_style( 'cmb-style' );
+		wp_enqueue_style('cmb-style');
 	}
 
 	/**
@@ -229,7 +235,7 @@ class PostCampaign {
 			href="#" onclick="openSidebar()"
 			id="new_sidebar_link">
 			<?php
-				esc_html_e( 'Design settings moved to a new sidebar.', 'planet4-master-theme-backend' )
+				esc_html_e('Design settings moved to a new sidebar.', 'planet4-master-theme-backend')
 			?>
 		</a>
 		<script>
@@ -252,7 +258,8 @@ class PostCampaign {
 	 * @param array $object_type The type of object.
 	 * @param array $field_type Instance of the `cmb2_Meta_Box_types` object.
 	 */
-	public function cmb2_render_footer_icon_link_field_callback( $field, $value, $object_id, $object_type, $field_type ) {
+	public function cmb2_render_footer_icon_link_field_callback($field, $value, $object_id, $object_type, $field_type)
+	{
 		$value = wp_parse_args(
 			$value,
 			[
@@ -267,11 +274,11 @@ class PostCampaign {
 				$field_type->input(
 					[
 						'class'       => 'cmb-type-text-medium',
-						'name'        => esc_attr( $field_type->_name( '[url]' ) ),
-						'id'          => esc_attr( $field_type->_id( '_url' ) ),
+						'name'        => esc_attr($field_type->_name('[url]')),
+						'id'          => esc_attr($field_type->_id('_url')),
 						'type'        => 'text',
-						'value'       => esc_url( $value['url'] ),
-						'placeholder' => __( 'Footer item link', 'planet4-master-theme-backend' ),
+						'value'       => esc_url($value['url']),
+						'placeholder' => __('Footer item link', 'planet4-master-theme-backend'),
 					]
 				),
 				[
@@ -294,11 +301,11 @@ class PostCampaign {
 				$field_type->input(
 					[
 						'class'       => 'cmb-type-text-medium',
-						'name'        => esc_attr( $field_type->_name( '[icon]' ) ),
-						'id'          => esc_attr( $field_type->_id( '_icon' ) ),
+						'name'        => esc_attr($field_type->_name('[icon]')),
+						'id'          => esc_attr($field_type->_id('_icon')),
 						'type'        => 'text',
 						'value'       => $value['icon'],
-						'placeholder' => __( 'Footer icon name', 'planet4-master-theme-backend' ),
+						'placeholder' => __('Footer icon name', 'planet4-master-theme-backend'),
 					]
 				),
 				[
@@ -315,7 +322,7 @@ class PostCampaign {
 			);
 		?>
 		</div>
-		<div class="alignleft"> <?php esc_html_e( 'In the “Footer icon name” field add the name of the icon you want from the', 'planet4-master-theme-backend' ); ?> <a target="_blank" href="https://github.com/greenpeace/planet4-styleguide/tree/master/src/icons"><?php esc_html_e( 'list of icons in the CSS styleguide', 'planet4-master-theme-backend' ); ?></a>. e.g. twitter-square</div>
+		<div class="alignleft"> <?php esc_html_e('In the “Footer icon name” field add the name of the icon you want from the', 'planet4-master-theme-backend'); ?> <a target="_blank" href="https://github.com/greenpeace/planet4-styleguide/tree/master/src/icons"><?php esc_html_e('list of icons in the CSS styleguide', 'planet4-master-theme-backend'); ?></a>. e.g. twitter-square</div>
 		<?php
 	}
 
@@ -340,7 +347,7 @@ class PostCampaign {
 			],
 			$args
 		);
-		register_post_meta( self::POST_TYPE, $meta_key, $args );
+		register_post_meta(self::POST_TYPE, $meta_key, $args);
 	}
 
 	/**
@@ -349,14 +356,15 @@ class PostCampaign {
 	 * @param array $field A field from the JSON theme file.
 	 * @return string Default value
 	 */
-	private static function get_field_default( $field ) {
+	private static function get_field_default($field)
+	{
 		$default = null;
-		if ( isset( $field['configurations'] ) && isset( $field['configurations']['default'] ) ) {
+		if (isset($field['configurations']) && isset($field['configurations']['default'])) {
 			$default_configuration = $field['configurations']['default'];
-			if ( isset( $field['configurations'][ $default_configuration ]['default'] ) ) {
+			if (isset($field['configurations'][ $default_configuration ]['default'])) {
 				$default = $field['configurations'][ $default_configuration ]['default'];
 			}
-		} elseif ( isset( $field['default'] ) ) {
+		} elseif (isset($field['default'])) {
 			$default = $field['default'];
 		}
 
@@ -368,10 +376,11 @@ class PostCampaign {
 	 *
 	 * @param mixed $theme_json The JSON theme file.
 	 */
-	private static function get_theme_defaults( $theme_json ) {
+	private static function get_theme_defaults($theme_json)
+	{
 		$defaults = [];
-		foreach ( $theme_json['fields'] as $field ) {
-			$defaults[ $field['id'] ] = self::get_field_default( $field );
+		foreach ($theme_json['fields'] as $field) {
+			$defaults[ $field['id'] ] = self::get_field_default($field);
 		}
 
 		return $defaults;
@@ -383,32 +392,33 @@ class PostCampaign {
 	 * @param array $meta The meta containing the variable values.
 	 * @return array The values that will be used for the css variables.
 	 */
-	public static function css_vars( array $meta ): array {
-		$theme = self::get_theme( $meta );
+	public static function css_vars(array $meta): array
+	{
+		$theme = self::get_theme($meta);
 
 		// TODO: Use wp_safe_remote_get?
 		// TODO: Handle errors.
 		$theme_json = json_decode(
 			// Ignoring the PHPCS error in the next line because it's a local file, not a remote request.
-			file_get_contents( __DIR__ . '/../campaign_themes/' . $theme . '.json' ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			file_get_contents(__DIR__ . '/../campaign_themes/' . $theme . '.json'), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			true
 		);
 
-		$defaults = self::get_theme_defaults( $theme_json );
+		$defaults = self::get_theme_defaults($theme_json);
 
 		// Use only meta keys that exist in the defaults.
-		$intersect = array_intersect_key( array_filter( $meta ), $defaults );
+		$intersect = array_intersect_key(array_filter($meta), $defaults);
 
 		// Replace the defaults with the campaign options where applicable.
-		$css_vars = array_merge( $defaults, $intersect );
+		$css_vars = array_merge($defaults, $intersect);
 
-		$css_vars = self::get_navbar_theme( $css_vars );
-		$css_vars = self::get_footer_theme( $css_vars );
-		$css_vars = self::get_passive_button_color( $css_vars, $meta );
-		$css_vars = self::replace_font_aliases( $css_vars );
-		$css_vars = self::get_body_font( $css_vars, $meta );
+		$css_vars = self::get_navbar_theme($css_vars);
+		$css_vars = self::get_footer_theme($css_vars);
+		$css_vars = self::get_passive_button_color($css_vars, $meta);
+		$css_vars = self::replace_font_aliases($css_vars);
+		$css_vars = self::get_body_font($css_vars, $meta);
 
-		$css_vars = array_filter( $css_vars );
+		$css_vars = array_filter($css_vars);
 
 		return $css_vars;
 	}
@@ -418,9 +428,10 @@ class PostCampaign {
 	 * @param array $meta The meta containing the style settings.
 	 * @return string The body font.
 	 */
-	public static function get_body_font( $css_vars, $meta ): array {
+	public static function get_body_font($css_vars, $meta): array
+	{
 		// Temporary fix for old campaigns having "campaign_body_font" as a "campaign".
-		if ( isset( $css_vars['campaign_body_font'] ) && 'campaign' === $css_vars['campaign_body_font'] ) {
+		if (isset($css_vars['campaign_body_font']) && 'campaign' === $css_vars['campaign_body_font']) {
 			$campaigns_font_map = [
 				'default'   => 'lora',
 				'antarctic' => 'sanctuary',
@@ -431,7 +442,7 @@ class PostCampaign {
 				'oil'       => 'Anton',
 				'plastic'   => 'Montserrat',
 			];
-			$theme              = self::get_theme( $meta );
+			$theme              = self::get_theme($meta);
 
 			$css_vars['campaign_body_font'] = $campaigns_font_map[ $theme ];
 		}
@@ -443,14 +454,15 @@ class PostCampaign {
 	 * @param array $css_vars The array containing the CSS variables.
 	 * @return array The variables for the footer theme.
 	 */
-	public static function replace_font_aliases( array $css_vars ): array {
+	public static function replace_font_aliases(array $css_vars): array
+	{
 		// TODO: Remove these special cases.
-		if ( isset( $css_vars['campaign_header_primary'] ) ) {
-			$css_vars['campaign_header_primary'] = str_replace( 'Montserrat_Light', 'Montserrat', $css_vars['campaign_header_primary'] );
+		if (isset($css_vars['campaign_header_primary'])) {
+			$css_vars['campaign_header_primary'] = str_replace('Montserrat_Light', 'Montserrat', $css_vars['campaign_header_primary']);
 		}
 
-		if ( isset( $css_vars['campaign_body_font'] ) ) {
-			$css_vars['campaign_body_font'] = str_replace( 'Montserrat_Light', 'Montserrat', $css_vars['campaign_body_font'] );
+		if (isset($css_vars['campaign_body_font'])) {
+			$css_vars['campaign_body_font'] = str_replace('Montserrat_Light', 'Montserrat', $css_vars['campaign_body_font']);
 		}
 
 		return $css_vars;
@@ -464,7 +476,8 @@ class PostCampaign {
 	 *
 	 * @return array The variables for the passive button.
 	 */
-	public static function get_passive_button_color( array $css_vars, array $meta ): array {
+	public static function get_passive_button_color(array $css_vars, array $meta): array
+	{
 		// TODO: Remove this "Passive" color map based on hovers.
 		$passive_button_colors_map = [
 			'#ffd204' => '#f36d3a',
@@ -477,8 +490,8 @@ class PostCampaign {
 			'#1b4a1b' => '#1b4a1b',
 		];
 
-		$css_vars['passive_button_color'] = isset( $meta['campaign_primary_color'] ) && $meta['campaign_primary_color']
-		? $passive_button_colors_map[ strtolower( $meta['campaign_primary_color'] ) ]
+		$css_vars['passive_button_color'] = isset($meta['campaign_primary_color']) && $meta['campaign_primary_color']
+		? $passive_button_colors_map[ strtolower($meta['campaign_primary_color']) ]
 		: '#f36d3a';
 
 		return $css_vars;
@@ -491,8 +504,9 @@ class PostCampaign {
 	 *
 	 * @return array The variables for the navigation bar.
 	 */
-	public static function get_navbar_theme( array $css_vars ): array {
-		if ( self::DEFAULT_NAVBAR_THEME === $css_vars['campaign_nav_type'] ) {
+	public static function get_navbar_theme(array $css_vars): array
+	{
+		if (self::DEFAULT_NAVBAR_THEME === $css_vars['campaign_nav_type']) {
 			$css_vars['campaign_logo_color'] = null;
 			$css_vars['campaign_nav_color']  = null;
 			$css_vars['campaign_logo']       = null;
@@ -508,21 +522,22 @@ class PostCampaign {
 	 *
 	 * @return array The variables for the footer theme.
 	 */
-	public static function get_footer_theme( array $css_vars ): array {
-		$footer_theme = ! empty( $css_vars['campaign_footer_theme'] )
+	public static function get_footer_theme(array $css_vars): array
+	{
+		$footer_theme = ! empty($css_vars['campaign_footer_theme'])
 											? $css_vars['campaign_footer_theme']
 											: null;
 
 		$default_footer_links_color = $css_vars['campaign_nav_color'] ? $css_vars['campaign_nav_color'] : '#1A1A1A';
 
-		if ( 'white' === $footer_theme ) {
+		if ('white' === $footer_theme) {
 			$css_vars['footer_links_color'] = $css_vars['footer_links_color'] ? $css_vars['footer_links_color'] : $default_footer_links_color;
 			$css_vars['footer_color']       = '#FFFFFF';
-		} elseif ( self::DEFAULT_NAVBAR_THEME === $css_vars['campaign_nav_type'] ) {
+		} elseif (self::DEFAULT_NAVBAR_THEME === $css_vars['campaign_nav_type']) {
 			$css_vars['footer_links_color'] = null;
 			$css_vars['footer_color']       = null;
 		} else {
-			switch ( ( $css_vars['campaign_logo_color'] ?? null ) ) {
+			switch (( $css_vars['campaign_logo_color'] ?? null )) {
 				case 'dark':
 					$css_vars['footer_links_color'] = '#1A1A1A';
 					break;
@@ -545,7 +560,8 @@ class PostCampaign {
 	 *
 	 * @return string The identifier of the theme.
 	 */
-	public static function get_theme( array $meta ): string {
+	public static function get_theme(array $meta): string
+	{
 		$theme = $meta['theme'] ?? $meta['_campaign_page_template'] ?? null;
 		$theme = $theme ? $theme : 'default';
 
@@ -559,15 +575,16 @@ class PostCampaign {
 	 *
 	 * @return string The identifier of the logo.
 	 */
-	public static function get_logo( array $meta ): string {
+	public static function get_logo(array $meta): string
+	{
 		$logo = $meta['campaign_logo'] ?? null;
-		if ( ! $logo ) {
+		if (! $logo) {
 			return 'greenpeace';
 		}
 
-		$theme = self::get_theme( $meta );
+		$theme = self::get_theme($meta);
 
-		if ( 'default' !== $theme ) {
+		if ('default' !== $theme) {
 			return 'greenpeace' === $logo ? 'greenpeace' : $theme;
 		}
 

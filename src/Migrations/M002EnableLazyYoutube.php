@@ -10,7 +10,8 @@ use P4\MasterTheme\Settings;
 /**
  * Turn on the lazy youtube feature everywhere.
  */
-class M002EnableLazyYoutube extends MigrationScript {
+class M002EnableLazyYoutube extends MigrationScript
+{
 
 	/**
 	 * Perform the actual migration.
@@ -19,10 +20,11 @@ class M002EnableLazyYoutube extends MigrationScript {
 	 *
 	 * @return void
 	 */
-	protected static function execute( MigrationRecord $record ): void {
-		$settings = get_option( Settings::KEY, [] );
+	protected static function execute(MigrationRecord $record): void
+	{
+		$settings = get_option(Settings::KEY, []);
 
 		$settings[ Features::LAZY_YOUTUBE_PLAYER ] = 'on';
-		update_option( Settings::KEY, $settings );
+		update_option(Settings::KEY, $settings);
 	}
 }

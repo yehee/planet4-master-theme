@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3d5d461848d19da5793dffa73d90cb52",
+    "content-hash": "9bf4d7ff1769b532a366017d10dbd67b",
     "packages": [
         {
             "name": "greenpeace/github-archive-installer",
@@ -2017,9 +2017,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/timber-library.1.18.2.zip",
-                "reference": null,
-                "shasum": null
+                "url": "https://downloads.wordpress.org/plugin/timber-library.1.18.2.zip"
             },
             "require": {
                 "composer/installers": "~1.0"

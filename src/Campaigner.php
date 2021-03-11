@@ -5,7 +5,8 @@ namespace P4\MasterTheme;
 /**
  * Register custom 'campaigner' role and adds custom capabilities.
  */
-class Campaigner {
+class Campaigner
+{
 
 	/**
 	 * @var [[string]] List of capabilities for each standard WordPress role.
@@ -65,10 +66,11 @@ class Campaigner {
 	/**
 	 * Add Campaigner role.
 	 */
-	private static function add_campaigner_role() {
+	private static function add_campaigner_role()
+	{
 		add_role(
 			'campaigner',
-			__( 'Campaigner', 'planet4-master-theme-backend' ),
+			__('Campaigner', 'planet4-master-theme-backend'),
 			[
 				// General.
 				'read'                       => true,
@@ -104,11 +106,12 @@ class Campaigner {
 	/**
 	 * Register campaigner role and add custom capabilities.
 	 */
-	public static function register_role_and_add_capabilities() {
-		foreach ( self::CAPABILITIES_MAP as $role_name => $capabilities ) {
-			$role = get_role( $role_name );
-			foreach ( $capabilities as $capability ) {
-				$role->add_cap( $capability );
+	public static function register_role_and_add_capabilities()
+	{
+		foreach (self::CAPABILITIES_MAP as $role_name => $capabilities) {
+			$role = get_role($role_name);
+			foreach ($capabilities as $capability) {
+				$role->add_cap($capability);
 			}
 		}
 		self::add_campaigner_role();

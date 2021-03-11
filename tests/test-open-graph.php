@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Test custom open graph meta attributes.
  *
@@ -10,8 +11,8 @@ use SteveGrunwell\PHPUnit_Markup_Assertions\MarkupAssertionsTrait;
 /**
  * Class OpenGraphTest.
  */
-class OpenGraphTest extends P4_TestCase {
-
+class OpenGraphTest extends P4_TestCase
+{
 	use MarkupAssertionsTrait;
 
 	/**
@@ -22,21 +23,22 @@ class OpenGraphTest extends P4_TestCase {
 	 *
 	 * @dataProvider posts_with_custom_og_provider
 	 */
-	public function test_post_custom_open_graph_data( $post_data, $template ) {
+	public function test_post_custom_open_graph_data($post_data, $template)
+	{
 
 		// Get author user.
-		$user = get_user_by( 'login', 'p4_author' );
-		wp_set_current_user( $user->ID );
+		$user = get_user_by('login', 'p4_author');
+		wp_set_current_user($user->ID);
 
-		$attachment_id                             = $this->factory->attachment->create_upload_object( dirname( __DIR__ ) . '/tests/data/images/pressmedia.jpg', 0 );
+		$attachment_id                             = $this->factory->attachment->create_upload_object(dirname(__DIR__) . '/tests/data/images/pressmedia.jpg', 0);
 		$post_data['meta_input']['p4_og_image_id'] = $attachment_id;
-		$post_id                                   = $this->factory->post->create( $post_data );
+		$post_id                                   = $this->factory->post->create($post_data);
 
-		$permalink = get_permalink( $post_id );
-		$this->go_to( $permalink );
+		$permalink = get_permalink($post_id);
+		$this->go_to($permalink);
 
 		$output = TimberHelper::ob_function(
-			function () use ( $template ) {
+			function () use ($template) {
 					include get_template_directory() . '/' . $template;
 			}
 		);
@@ -53,7 +55,7 @@ class OpenGraphTest extends P4_TestCase {
 		$this->assertHasElementWithAttributes(
 			[
 				'property' => 'og:description',
-				'content'  => wp_strip_all_tags( $post_data['meta_input']['p4_og_description'] ),
+				'content'  => wp_strip_all_tags($post_data['meta_input']['p4_og_description']),
 			],
 			$output,
 			'Did not find og:description meta.'
@@ -62,7 +64,7 @@ class OpenGraphTest extends P4_TestCase {
 		$this->assertHasElementWithAttributes(
 			[
 				'property' => 'og:image',
-				'content'  => wp_get_attachment_url( $attachment_id ),
+				'content'  => wp_get_attachment_url($attachment_id),
 			],
 			$output,
 			'Did not find og:image meta.'
@@ -85,20 +87,21 @@ class OpenGraphTest extends P4_TestCase {
 	 *
 	 * @dataProvider posts_provider
 	 */
-	public function test_post_open_graph_data( $post_data, $template ) {
+	public function test_post_open_graph_data($post_data, $template)
+	{
 
 		// Get author user.
-		$user = get_user_by( 'login', 'p4_author' );
-		wp_set_current_user( $user->ID );
+		$user = get_user_by('login', 'p4_author');
+		wp_set_current_user($user->ID);
 
 		// Create a sample post.
-		$post_id = $this->factory->post->create( $post_data );
+		$post_id = $this->factory->post->create($post_data);
 
-		$permalink = get_permalink( $post_id );
-		$this->go_to( $permalink );
+		$permalink = get_permalink($post_id);
+		$this->go_to($permalink);
 
 		$output = TimberHelper::ob_function(
-			function () use ( $template ) {
+			function () use ($template) {
 					include get_template_directory() . '/' . $template;
 			}
 		);
@@ -106,7 +109,7 @@ class OpenGraphTest extends P4_TestCase {
 		$this->assertHasElementWithAttributes(
 			[
 				'property' => 'og:title',
-				'content'  => $post_data['post_title'] . ' - ' . get_bloginfo( 'name' ),
+				'content'  => $post_data['post_title'] . ' - ' . get_bloginfo('name'),
 			],
 			$output,
 			'Did not find og:title meta.'
@@ -129,7 +132,8 @@ class OpenGraphTest extends P4_TestCase {
 	 *
 	 * @return array
 	 */
-	public function posts_with_custom_og_provider() {
+	public function posts_with_custom_og_provider()
+	{
 
 		return [
 			[
@@ -182,7 +186,8 @@ class OpenGraphTest extends P4_TestCase {
 	 *
 	 * @return array
 	 */
-	public function posts_provider() {
+	public function posts_provider()
+	{
 		return [
 			[
 				[

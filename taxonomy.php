@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The template for displaying Taxonomy pages.
  *
@@ -30,16 +31,16 @@ $post_args = [
 $context['page_category']   = 'Post Type Page';
 $context['dummy_thumbnail'] = get_template_directory_uri() . '/images/dummy-thumbnail.png';
 
-if ( get_query_var( 'page' ) ) {
+if (get_query_var('page')) {
 	$templates          = [ 'tease-taxonomy-post.twig' ];
-	$post_args['paged'] = get_query_var( 'page' );
-	$pagetype_posts     = new \Timber\PostQuery( $post_args, Post::class );
-	foreach ( $pagetype_posts as $pagetype_post ) {
+	$post_args['paged'] = get_query_var('page');
+	$pagetype_posts     = new \Timber\PostQuery($post_args, Post::class);
+	foreach ($pagetype_posts as $pagetype_post) {
 		$context['post'] = $pagetype_post;
-		Timber::render( $templates, $context );
+		Timber::render($templates, $context);
 	}
 } else {
-	$pagetype_posts   = new \Timber\PostQuery( $post_args, Post::class );
+	$pagetype_posts   = new \Timber\PostQuery($post_args, Post::class);
 	$context['posts'] = $pagetype_posts;
-	Timber::render( $templates, $context );
+	Timber::render($templates, $context);
 }

@@ -5,12 +5,14 @@ namespace P4\MasterTheme;
 /**
  * Class Cookies
  */
-class Cookies {
+class Cookies
+{
 	/**
 	 * Cookies constructor.
 	 */
-	public function __construct() {
-		add_filter( 'gal_set_login_cookie', [ $this, 'filter_google_login_set_login_cookie' ], 10, 1 );
+	public function __construct()
+	{
+		add_filter('gal_set_login_cookie', [ $this, 'filter_google_login_set_login_cookie' ], 10, 1);
 	}
 
 	/**
@@ -22,7 +24,8 @@ class Cookies {
 	 *
 	 * @return bool
 	 */
-	public function filter_google_login_set_login_cookie( $dosetcookie ) {
+	public function filter_google_login_set_login_cookie($dosetcookie)
+	{
 		global $pagenow;
 
 		return 'wp-login.php' === $pagenow;

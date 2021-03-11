@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Commands.
  */
@@ -12,12 +13,14 @@ use P4\MasterTheme\Commands\SaveCloudflareKey;
 /**
  * Class with a static function just because PHP can't autoload functions.
  */
-class Commands {
+class Commands
+{
 	/**
 	 * Add some WP_CLI commands if we're in CLI.
 	 */
-	public static function load() {
-		if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
+	public static function load()
+	{
+		if (! defined('WP_CLI') || ! WP_CLI) {
 			return;
 		}
 		RunActivator::register();

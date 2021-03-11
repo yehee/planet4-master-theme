@@ -7,7 +7,8 @@ use DateTime;
 /**
  * Information on a migration run.
  */
-final class MigrationRecord {
+final class MigrationRecord
+{
 	/**
 	 * @var string The id of the script.
 	 */
@@ -40,7 +41,8 @@ final class MigrationRecord {
 	 *
 	 * @return self A new record.
 	 */
-	public static function start( string $migration_id ): self {
+	public static function start(string $migration_id): self
+	{
 		$record = new self();
 
 		$record->migration_id = $migration_id;
@@ -54,14 +56,16 @@ final class MigrationRecord {
 	 *
 	 * @param string $message a log messages.
 	 */
-	public function add_log( string $message ): void {
+	public function add_log(string $message): void
+	{
 		$this->logs[] = $message;
 	}
 
 	/**
 	 * Mark this migration as succeeded.
 	 */
-	public function succeed(): void {
+	public function succeed(): void
+	{
 		$this->success = true;
 	}
 
@@ -70,15 +74,17 @@ final class MigrationRecord {
 	 *
 	 * @param string $message Reason for failure.
 	 */
-	public function fail( string $message ): void {
+	public function fail(string $message): void
+	{
 		$this->success = false;
-		$this->add_log( $message );
+		$this->add_log($message);
 	}
 
 	/**
 	 * Mark script as done.
 	 */
-	public function done(): void {
+	public function done(): void
+	{
 		$this->end_time = new DateTime();
 	}
 
@@ -87,7 +93,8 @@ final class MigrationRecord {
 	 *
 	 * @return array Array with instance's data.
 	 */
-	public function to_log_entry(): array {
+	public function to_log_entry(): array
+	{
 		return [
 			'id'         => $this->migration_id,
 			'start_time' => $this->start_time,
@@ -102,7 +109,8 @@ final class MigrationRecord {
 	 *
 	 * @return string The id of the script
 	 */
-	public function get_migration_id(): string {
+	public function get_migration_id(): string
+	{
 		return $this->migration_id;
 	}
 
@@ -111,7 +119,8 @@ final class MigrationRecord {
 	 *
 	 * @return bool Whether the run succeeded.
 	 */
-	public function was_success(): ?bool {
+	public function was_success(): ?bool
+	{
 		return $this->success;
 	}
 }

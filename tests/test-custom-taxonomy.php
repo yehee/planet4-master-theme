@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Test p4_page_type custom taxonomy.
  *
@@ -10,18 +11,20 @@ use P4\MasterTheme\CustomTaxonomy;
 /**
  * Class CustomTaxonomyTest
  */
-class CustomTaxonomyTest extends P4_TestCase {
+class CustomTaxonomyTest extends P4_TestCase
+{
 
 	/**
 	 * Test that a post has always a p4-page-type term assigned to it.
 	 *
 	 * @covers P4\MasterTheme\CustomTaxonomy::save_taxonomy_page_type
 	 */
-	public function test_post_has_a_taxonomy_term_assigned() {
+	public function test_post_has_a_taxonomy_term_assigned()
+	{
 
 		// Get editor user.
-		$user = get_user_by( 'login', 'p4_editor' );
-		wp_set_current_user( $user->ID );
+		$user = get_user_by('login', 'p4_editor');
+		wp_set_current_user($user->ID);
 
 		// Create a sample post without assigning a p4-page-type story term to it.
 		$post_id = $this->factory->post->create(
@@ -33,12 +36,11 @@ class CustomTaxonomyTest extends P4_TestCase {
 			]
 		);
 
-		$terms = wp_get_object_terms( $post_id, 'p4-page-type' );
+		$terms = wp_get_object_terms($post_id, 'p4-page-type');
 
 		// Assert that the post has been assigned with a p4-page-type term.
-		$this->assertEquals( 1, count( $terms ) );
-		$this->assertInstanceOf( 'WP_Term', $terms[0] );
-
+		$this->assertEquals(1, count($terms));
+		$this->assertInstanceOf('WP_Term', $terms[0]);
 	}
 
 	/**
@@ -46,11 +48,12 @@ class CustomTaxonomyTest extends P4_TestCase {
 	 *
 	 * @covers P4\MasterTheme\CustomTaxonomy::save_taxonomy_page_type
 	 */
-	public function test_post_has_a_single_taxonomy_term_assigned() {
+	public function test_post_has_a_single_taxonomy_term_assigned()
+	{
 
 		// Get editor user.
-		$user = get_user_by( 'login', 'p4_editor' );
-		wp_set_current_user( $user->ID );
+		$user = get_user_by('login', 'p4_editor');
+		wp_set_current_user($user->ID);
 
 		// Create a sample post and assing p4-page-type story term to it.
 		$post_id = $this->factory->post->create(
@@ -65,9 +68,9 @@ class CustomTaxonomyTest extends P4_TestCase {
 			]
 		);
 
-		$terms = wp_get_object_terms( $post_id, 'p4-page-type' );
+		$terms = wp_get_object_terms($post_id, 'p4-page-type');
 		// Assert that the post has been assigned with a single p4-page-type term.
-		$this->assertEquals( 1, count( $terms ) );
-		$this->assertEquals( 'publication', $terms[0]->slug );
+		$this->assertEquals(1, count($terms));
+		$this->assertEquals('publication', $terms[0]->slug);
 	}
 }

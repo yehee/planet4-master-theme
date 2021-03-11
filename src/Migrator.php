@@ -8,12 +8,14 @@ use P4\MasterTheme\Migrations\M002EnableLazyYoutube;
 /**
  * Run any new migration scripts and record results in the log.
  */
-class Migrator {
+class Migrator
+{
 
 	/**
 	 * Run any new migration scripts and record results in the log.
 	 */
-	public static function migrate(): void {
+	public static function migrate(): void
+	{
 
 		// Fetch migration script ids that have run from WP option.
 		$log = MigrationLog::from_wp_options();
@@ -27,13 +29,13 @@ class Migrator {
 		];
 
 		// Loop migrations and run those that haven't run yet.
-		foreach ( $scripts as $script ) {
-			if ( $log->already_ran( $script::get_id() ) ) {
+		foreach ($scripts as $script) {
+			if ($log->already_ran($script::get_id())) {
 				continue;
 			}
 
 			$record = $script::run();
-			$log->add( $record );
+			$log->add($record);
 		}
 
 		$log->persist();

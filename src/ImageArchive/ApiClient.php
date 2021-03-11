@@ -8,7 +8,8 @@ use WP_Http;
 /**
  * Authenticate to the greenpeace media API and query image data.
  */
-class ApiClient {
+class ApiClient
+{
 	private const BASE_URL = 'https://media.greenpeace.org';
 
 	private const AUTH_URL = self::BASE_URL . '/API/Authentication/v1.0/Login';
@@ -43,7 +44,8 @@ class ApiClient {
 	 *
 	 * @param string $token The temporary authentication token.
 	 */
-	private function __construct( string $token ) {
+	private function __construct(string $token)
+	{
 		$this->token = $token;
 	}
 
@@ -54,11 +56,12 @@ class ApiClient {
 	 * @return static Authenticated instance.
 	 * @throws RemoteCallFailed Authentication failed.
 	 */
-	public static function from_cache_or_credentials(): self {
-		$cached_token = get_transient( self::TOKEN_CACHE_KEY );
+	public static function from_cache_or_credentials(): self
+	{
+		$cached_token = get_transient(self::TOKEN_CACHE_KEY);
 
-		if ( false !== $cached_token ) {
-			return new self( $cached_token );
+		if (false !== $cached_token) {
+			return new self($cached_token);
 		}
 
 		return self::from_settings();
@@ -70,10 +73,11 @@ class ApiClient {
 	 * @return static Authenticated instance.
 	 * @throws RemoteCallFailed Authentication failed.
 	 */
-	public static function from_settings(): self {
-		$p4ml_settings = get_option( 'p4ml_main_settings' );
+	public static function from_settings(): self
+	{
+		$p4ml_settings = get_option('p4ml_main_settings');
 
-		return self::from_credentials( $p4ml_settings['p4ml_api_username'], $p4ml_settings['p4ml_api_password'] );
+		return self::from_credentials($p4ml_settings['p4ml_api_username'], $p4ml_settings['p4ml_api_password']);
 	}
 
 	/**
@@ -85,10 +89,11 @@ class ApiClient {
 	 * @return static Authenticated instance.
 	 * @throws RemoteCallFailed Authentication failed.
 	 */
-	public static function from_credentials( string $username, string $password ): self {
-		$token = self::fetch_token( $username, $password );
+	public static function from_credentials(string $username, string $password): self
+	{
+		$token = self::fetch_token($username, $password);
 
-		return new self( $token );
+		return new self($token);
 	}
 
 	/**
@@ -100,7 +105,8 @@ class ApiClient {
 	 * @return string The authentication token.
 	 * @throws RemoteCallFailed Authentication failed.
 	 */
-	private static function fetch_token( string $username, string $password ): string {
+	private static function fetch_token(string $username, string $password): string
+	{
 		$response = wp_safe_remote_post(
 			self::AUTH_URL,
 			[
@@ -113,24 +119,23 @@ class ApiClient {
 			]
 		);
 		// Authentication failure.
-		if ( is_wp_error( $response ) ) {
+		if (is_wp_error($response)) {
 			$response = $response->get_error_message() . ' ' . $response->get_error_code();
-
-		} elseif ( WP_Http::ACCEPTED !== $response['response']['code'] ) {
+		} elseif (WP_Http::ACCEPTED !== $response['response']['code']) {
 			$response = $response['response']['message'] . ' ' . $response['response']['code'];
 		}
 
-		if ( ! is_array( $response ) || empty( $response['body'] ) ) {
-			throw new RemoteCallFailed( "Unable to authenticate user {$username}" );
+		if (! is_array($response) || empty($response['body'])) {
+			throw new RemoteCallFailed("Unable to authenticate user {$username}");
 		}
 		// Communication with ML API is authenticated.
-		$body  = json_decode( $response['body'], true );
+		$body  = json_decode($response['body'], true);
 		$token = $body['APIResponse']['Token'];
 
 		// Time period in seconds to keep the ml_auth_token before refreshing. Typically 1 hour.
 		$expiration_seconds = ( $body['APIResponse']['TimeoutPeriodMinutes'] ?? 60 ) * 60;
 
-		set_transient( self::TOKEN_CACHE_KEY, $token, $expiration_seconds );
+		set_transient(self::TOKEN_CACHE_KEY, $token, $expiration_seconds);
 
 		return $token;
 	}
@@ -143,12 +148,13 @@ class ApiClient {
 	 * @return Image[]|null Data for these images.
 	 * @throws RemoteCallFailed Failed to fetch images.
 	 */
-	public function get_selection( array $ids ): ?array {
+	public function get_selection(array $ids): ?array
+	{
 		$params = [
-			'query' => 'SystemIdentifier: ' . implode( ' OR ', $ids ),
+			'query' => 'SystemIdentifier: ' . implode(' OR ', $ids),
 		];
 
-		return $this->fetch_images( $params );
+		return $this->fetch_images($params);
 	}
 
 	/**
@@ -159,10 +165,11 @@ class ApiClient {
 	 * @return Image[]|null The matching images.
 	 * @throws RemoteCallFailed Failed to fetch images.
 	 */
-	public function fetch_images( array $additional_params = [] ): ?array {
-		$params = array_merge( self::DEFAULT_PARAMS, $additional_params, $this->token_param() );
+	public function fetch_images(array $additional_params = []): ?array
+	{
+		$params = array_merge(self::DEFAULT_PARAMS, $additional_params, $this->token_param());
 
-		$url = add_query_arg( $params, self::SEARCH_URL );
+		$url = add_query_arg($params, self::SEARCH_URL);
 
 		$response = wp_remote_get(
 			$url,
@@ -171,19 +178,19 @@ class ApiClient {
 			]
 		);
 
-		if ( is_wp_error( $response ) || WP_Http::OK !== $response['response']['code'] ) {
+		if (is_wp_error($response) || WP_Http::OK !== $response['response']['code']) {
 			// Maybe will throw exception here.
 			throw new RemoteCallFailed(
-				is_wp_error( $response )
+				is_wp_error($response)
 					? $response->get_error_message()
 					: ( $response['body'] ?? 'Unknown error.' )
 			);
 		}
-		$response = json_decode( $response['body'], true );
+		$response = json_decode($response['body'], true);
 
-		$images_in_wordpress = self::get_images_in_wordpress( $response );
+		$images_in_wordpress = self::get_images_in_wordpress($response);
 
-		return Image::all_from_api_response( $response, $images_in_wordpress );
+		return Image::all_from_api_response($response, $images_in_wordpress);
 	}
 
 	/**
@@ -191,8 +198,9 @@ class ApiClient {
 	 *
 	 * @return array All fields that can be requested from the API + description and examples.
 	 */
-	public function show_fields(): array {
-		$url = add_query_arg( array_merge( $this->token_param(), [ 'format' => 'json' ] ), self::LIST_FIELDS_URL );
+	public function show_fields(): array
+	{
+		$url = add_query_arg(array_merge($this->token_param(), [ 'format' => 'json' ]), self::LIST_FIELDS_URL);
 
 		$response = wp_remote_get(
 			$url,
@@ -201,7 +209,7 @@ class ApiClient {
 			]
 		);
 
-		$response = json_decode( $response['body'], true );
+		$response = json_decode($response['body'], true);
 
 		return $response['APIResponse']['Metadata'];
 	}
@@ -212,8 +220,9 @@ class ApiClient {
 	 *
 	 * @return array List of criteria that can be used in API queries.
 	 */
-	public function show_criteria(): array {
-		$url = add_query_arg( array_merge( $this->token_param(), [ 'format' => 'json' ] ), self::LIST_CRITERIA_URL );
+	public function show_criteria(): array
+	{
+		$url = add_query_arg(array_merge($this->token_param(), [ 'format' => 'json' ]), self::LIST_CRITERIA_URL);
 
 		$response = wp_remote_get(
 			$url,
@@ -222,7 +231,7 @@ class ApiClient {
 			]
 		);
 
-		$response = json_decode( $response['body'], true );
+		$response = json_decode($response['body'], true);
 
 		return $response['APIResponse'];
 	}
@@ -234,12 +243,13 @@ class ApiClient {
 	 *
 	 * @return string[] Indexed array with the WordPress ID of all images that are in WordPress
 	 */
-	private static function get_images_in_wordpress( array $api_data ): array {
+	private static function get_images_in_wordpress(array $api_data): array
+	{
 		global $wpdb;
 		$images = $api_data['APIResponse']['Items'] ?? [];
 
 		$ids = array_map(
-			static function ( $image ) {
+			static function ($image) {
 				return $image['SystemIdentifier'];
 			},
 			$images
@@ -248,15 +258,15 @@ class ApiClient {
 		$sql = '
 SELECT p.id, m.meta_value
 FROM %1$s p JOIN %2$s m ON m.post_id = p.id
-WHERE m.meta_key = "' . Image::ARCHIVE_ID_META_KEY . '" AND m.meta_value IN (' . generate_list_placeholders( $ids, 3, 's' ) . ')';
+WHERE m.meta_key = "' . Image::ARCHIVE_ID_META_KEY . '" AND m.meta_value IN (' . generate_list_placeholders($ids, 3, 's') . ')';
 
-		$prepared = $wpdb->prepare( $sql, array_merge( [ $wpdb->posts, $wpdb->postmeta ], $ids ) ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$prepared = $wpdb->prepare($sql, array_merge([ $wpdb->posts, $wpdb->postmeta ], $ids)); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
-		$results = $wpdb->get_results( $prepared, ARRAY_A );//phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$results = $wpdb->get_results($prepared, ARRAY_A);//phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		// Return as indexed array to make lookups easier.
 		$indexed = [];
-		foreach ( $results as $result ) {
+		foreach ($results as $result) {
 			$indexed[ $result['meta_value'] ] = (int) $result['id'];
 		}
 
@@ -268,7 +278,8 @@ WHERE m.meta_key = "' . Image::ARCHIVE_ID_META_KEY . '" AND m.meta_value IN (' .
 	 *
 	 * @return string[] Array with the token key and value.
 	 */
-	private function token_param(): array {
+	private function token_param(): array
+	{
 		return [ 'token' => $this->token ];
 	}
 }

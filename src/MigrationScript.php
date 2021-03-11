@@ -10,13 +10,15 @@ use Exception;
  * WordPress's global functions to interact with the database (either through the high level API or using raw SQL,
  * whatever fits the specific case best).
  */
-abstract class MigrationScript {
+abstract class MigrationScript
+{
 	/**
 	 * Get a unique identifier, achieved here by using the FQCN.
 	 *
 	 * @return string The unique identifier.
 	 */
-	public static function get_id(): string {
+	public static function get_id(): string
+	{
 		return static::class;
 	}
 
@@ -27,22 +29,23 @@ abstract class MigrationScript {
 	 *
 	 * @return void
 	 */
-	abstract protected static function execute( MigrationRecord $record ): void;
+	abstract protected static function execute(MigrationRecord $record): void;
 
 	/**
 	 * Log the time and run the migration.
 	 *
 	 * @return MigrationRecord Data on the migration run.
 	 */
-	public static function run(): MigrationRecord {
-		$record = MigrationRecord::start( static::class );
+	public static function run(): MigrationRecord
+	{
+		$record = MigrationRecord::start(static::class);
 
 		try {
-			static::execute( $record );
+			static::execute($record);
 			$record->succeed();
-		} catch ( Exception $exception ) {
+		} catch (Exception $exception) {
 			$message = 'Migration ' . $record->get_migration_id() . ' failed. Message: ' . $exception->getMessage();
-			$record->fail( $message );
+			$record->fail($message);
 		}
 
 		$record->done();

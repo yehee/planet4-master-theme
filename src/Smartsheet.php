@@ -7,7 +7,8 @@ use InvalidArgumentException;
 /**
  * A data object for SmartSheet API responses.
  */
-final class Smartsheet {
+final class Smartsheet
+{
 	/**
 	 * @var array The columns of the sheet.
 	 */
@@ -24,7 +25,8 @@ final class Smartsheet {
 	 * @param array $columns The columns of the sheet.
 	 * @param array $rows The rows of the sheet.
 	 */
-	private function __construct( array $columns, array $rows ) {
+	private function __construct(array $columns, array $rows)
+	{
 		$this->columns = $columns;
 		$this->rows    = $rows;
 	}
@@ -37,12 +39,13 @@ final class Smartsheet {
 	 * @return static The instance.
 	 * @throws InvalidArgumentException If the data doesn't have the correct keys.
 	 */
-	public static function from_api_response( array $data ): self {
-		if ( ! isset( $data['columns'], $data['rows'] ) ) {
-			throw new InvalidArgumentException( 'Cannot create from API data as it does not have rows.' );
+	public static function from_api_response(array $data): self
+	{
+		if (! isset($data['columns'], $data['rows'])) {
+			throw new InvalidArgumentException('Cannot create from API data as it does not have rows.');
 		}
 
-		return new self( $data['columns'], $data['rows'] );
+		return new self($data['columns'], $data['rows']);
 	}
 
 	/**
@@ -53,15 +56,16 @@ final class Smartsheet {
 	 *
 	 * @return Smartsheet
 	 */
-	public function filter_by_column( int $column_index, $column_value ): self {
+	public function filter_by_column(int $column_index, $column_value): self
+	{
 		$rows = array_filter(
 			$this->rows,
-			function ( $row ) use ( $column_index, $column_value ) {
+			function ($row) use ($column_index, $column_value) {
 				return $row['cells'][ $column_index ]['value'] === $column_value;
 			}
 		);
 
-		return new self( $this->columns, $rows );
+		return new self($this->columns, $rows);
 	}
 
 
@@ -72,15 +76,16 @@ final class Smartsheet {
 	 *
 	 * @return Smartsheet
 	 */
-	public function sort_on_column( int $column_index ): self {
+	public function sort_on_column(int $column_index): self
+	{
 		$rows = $this->rows;
 		usort(
 			$rows,
-			function ( $row1, $row2 ) use ( $column_index ) {
+			function ($row1, $row2) use ($column_index) {
 				return $row1['cells'][ $column_index ] <=> $row2['cells'][ $column_index ];
 			}
 		);
-		return new self( $this->columns, $rows );
+		return new self($this->columns, $rows);
 	}
 
 	/**
@@ -90,9 +95,10 @@ final class Smartsheet {
 	 *
 	 * @return mixed[] The values in that column.
 	 */
-	public function get_column_values( int $column_index ): array {
+	public function get_column_values(int $column_index): array
+	{
 		return array_map(
-			function ( $row ) use ( $column_index ) {
+			function ($row) use ($column_index) {
 				return $row['cells'][ $column_index ]['value'];
 			},
 			$this->rows
@@ -106,15 +112,16 @@ final class Smartsheet {
 	 *
 	 * @return array The exported columns with the indexes provided in $columns.
 	 */
-	public function export_columns( array $columns ): array {
+	public function export_columns(array $columns): array
+	{
 		return array_map(
-			function ( $row ) use ( $columns ) {
+			function ($row) use ($columns) {
 				$cell_index = 0;
 
 				return array_reduce(
 					$row['cells'],
-					function ( $carry, $cell ) use ( $columns, &$cell_index ) {
-						if ( array_key_exists( $cell_index, $columns ) ) {
+					function ($carry, $cell) use ($columns, &$cell_index) {
+						if (array_key_exists($cell_index, $columns)) {
 							$export_name = $columns[ $cell_index ];
 
 							$carry[ $export_name ] = $cell['value'] ?? null;
@@ -137,9 +144,10 @@ final class Smartsheet {
 	 *
 	 * @return int|null The id of the column, or null if no column was found.
 	 */
-	public function get_column_index( string $column_title ): ?int {
-		foreach ( $this->columns as $column ) {
-			if ( $column['title'] === $column_title ) {
+	public function get_column_index(string $column_title): ?int
+	{
+		foreach ($this->columns as $column) {
+			if ($column['title'] === $column_title) {
 				return $column['index'];
 			}
 		}

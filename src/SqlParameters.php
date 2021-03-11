@@ -15,7 +15,8 @@ use P4\MasterTheme\Exception\SqlInIsEmpty;
  *    $sqlStart = "SELECT * FROM " . $params->object('myTable');
  *    $wpdb->prepare($sqlStart . $sqlEnd, $params->getValues());
  */
-class SqlParameters {
+class SqlParameters
+{
 	/**
 	 * @var mixed[] The values of the parameters in the order they were added.
 	 */
@@ -28,10 +29,11 @@ class SqlParameters {
 	 *
 	 * @return string Numbered placeholder.
 	 */
-	public function identifier( string $name ): string {
+	public function identifier(string $name): string
+	{
 		$this->values[] = $name;
 
-		$n = count( $this->values );
+		$n = count($this->values);
 
 		return "`%$n\$s`";
 	}
@@ -43,10 +45,11 @@ class SqlParameters {
 	 *
 	 * @return string Numbered placeholder.
 	 */
-	public function int( int $value ): string {
+	public function int(int $value): string
+	{
 		$this->values[] = $value;
 
-		$n = count( $this->values );
+		$n = count($this->values);
 
 		return "%$n\$d";
 	}
@@ -58,10 +61,11 @@ class SqlParameters {
 	 *
 	 * @return string Numbered placeholder.
 	 */
-	public function string( string $value ): string {
+	public function string(string $value): string
+	{
 		$this->values[] = $value;
 
-		$n = count( $this->values );
+		$n = count($this->values);
 
 		return "'%$n\$s'";
 	}
@@ -74,18 +78,19 @@ class SqlParameters {
 	 * @return string Concatenated numbered placeholders.
 	 * @throws SqlInIsEmpty If $values is an empty array.
 	 */
-	public function int_list( array $values ): string {
-		if ( empty( $values ) ) {
+	public function int_list(array $values): string
+	{
+		if (empty($values)) {
 			throw new SqlInIsEmpty(
 				'An IN query does not work if there are no values, please check before passing as an argument.'
 			);
 		}
 		$params = [];
-		foreach ( $values as $value ) {
-			$params[] = $this->int( $value );
+		foreach ($values as $value) {
+			$params[] = $this->int($value);
 		}
 
-		return ' (' . implode( ',', $params ) . ') ';
+		return ' (' . implode(',', $params) . ') ';
 	}
 
 	/**
@@ -96,18 +101,19 @@ class SqlParameters {
 	 * @return string Concatenated numbered placeholders.
 	 * @throws SqlInIsEmpty If $values is an empty array.
 	 */
-	public function string_list( array $values ): string {
-		if ( empty( $values ) ) {
+	public function string_list(array $values): string
+	{
+		if (empty($values)) {
 			throw new SqlInIsEmpty(
 				'An IN query does not work if there are no values, please check before passing as an argument.'
 			);
 		}
 		$params = [];
-		foreach ( $values as $value ) {
-			$params[] = $this->string( $value );
+		foreach ($values as $value) {
+			$params[] = $this->string($value);
 		}
 
-		return ' (' . implode( ',', $params ) . ') ';
+		return ' (' . implode(',', $params) . ') ';
 	}
 
 	/**
@@ -115,7 +121,8 @@ class SqlParameters {
 	 *
 	 * @return mixed[] All values.
 	 */
-	public function get_values(): array {
+	public function get_values(): array
+	{
 		return $this->values;
 	}
 }

@@ -5,7 +5,8 @@ namespace P4\MasterTheme;
 /**
  * Data class for post editor analytics values.
  */
-final class AnalyticsValues {
+final class AnalyticsValues
+{
 	private const CACHE_KEY = 'analytics_global_projects';
 
 	/**
@@ -24,7 +25,8 @@ final class AnalyticsValues {
 	 * @param string[]      $global_projects A list of the global projects.
 	 * @param string[]|null $local_projects A list of the local projects.
 	 */
-	private function __construct( array $global_projects, ?array $local_projects = null ) {
+	private function __construct(array $global_projects, ?array $local_projects = null)
+	{
 		$this->global_projects = $global_projects;
 		$this->local_projects  = $local_projects;
 	}
@@ -41,11 +43,11 @@ final class AnalyticsValues {
 		Smartsheet $global_smartsheet,
 		Smartsheet $local_smartsheet = null
 	): self {
-		$project_name_column = $global_smartsheet->get_column_index( 'Global Project Standard' );
-		$approved_column     = $global_smartsheet->get_column_index( 'Standard Approved' );
-		$tracking_id_column  = $global_smartsheet->get_column_index( 'Tracking ID' );
+		$project_name_column = $global_smartsheet->get_column_index('Global Project Standard');
+		$approved_column = $global_smartsheet->get_column_index('Standard Approved');
+		$tracking_id_column  = $global_smartsheet->get_column_index('Tracking ID');
 
-		$global_projects = $global_smartsheet->filter_by_column( $approved_column, true )->sort_on_column(
+		$global_projects = $global_smartsheet->filter_by_column($approved_column, true)->sort_on_column(
 			$project_name_column
 		)->export_columns(
 			[
@@ -55,19 +57,19 @@ final class AnalyticsValues {
 		);
 
 		$local_projects = null;
-		if ( null !== $local_smartsheet ) {
+		if (null !== $local_smartsheet) {
 			// Fetch local (NRO) smartsheet data.
-			$project_name_column = $local_smartsheet->get_column_index( 'Local Project Standard' );
-			$approved_column     = $local_smartsheet->get_column_index( 'Local Sync' );
+			$project_name_column = $local_smartsheet->get_column_index('Local Project Standard');
+			$approved_column     = $local_smartsheet->get_column_index('Local Sync');
 
-			$local_projects = $local_smartsheet->filter_by_column( $approved_column, true )->sort_on_column( $project_name_column )->export_columns(
+			$local_projects = $local_smartsheet->filter_by_column($approved_column, true)->sort_on_column($project_name_column)->export_columns(
 				[
 					$project_name_column => 'local_project_name',
 				]
 			);
 		}
 
-		return new self( $global_projects, $local_projects );
+		return new self($global_projects, $local_projects);
 	}
 
 	/**
@@ -76,8 +78,9 @@ final class AnalyticsValues {
 	 * @param array $cache_array The cache array.
 	 * @return static The instance.
 	 */
-	public static function from_cache_array( array $cache_array ): self {
-		return new self( $cache_array['global_projects'], $cache_array['local_projects'] );
+	public static function from_cache_array(array $cache_array): self
+	{
+		return new self($cache_array['global_projects'], $cache_array['local_projects']);
 	}
 
 	/**
@@ -85,7 +88,8 @@ final class AnalyticsValues {
 	 *
 	 * @return array The data for cache.
 	 */
-	public function to_cache_array(): array {
+	public function to_cache_array(): array
+	{
 		return [
 			'global_projects' => $this->global_projects,
 			'local_projects'  => $this->local_projects,
@@ -97,42 +101,43 @@ final class AnalyticsValues {
 	 *
 	 * @return static The instance.
 	 */
-	public static function from_cache_or_api_or_hardcoded(): self {
-		$cache = wp_cache_get( self::CACHE_KEY );
+	public static function from_cache_or_api_or_hardcoded(): self
+	{
+		$cache = wp_cache_get(self::CACHE_KEY);
 
-		if ( false !== $cache ) {
-			return self::from_cache_array( $cache );
+		if (false !== $cache) {
+			return self::from_cache_array($cache);
 		}
 
-		$api_key = defined( 'SMARTSHEET_API_KEY' ) ? SMARTSHEET_API_KEY : null;
+		$api_key = defined('SMARTSHEET_API_KEY') ? SMARTSHEET_API_KEY : null;
 
-		if ( ! $api_key ) {
+		if (! $api_key) {
 			return self::from_hardcoded_values();
 		}
 
-		$smartsheet_client = SmartsheetClient::from_api_key( $api_key );
+		$smartsheet_client = SmartsheetClient::from_api_key($api_key);
 
 		$global_sheet_id = $_ENV['ANALYTICS_GLOBAL_SMARTSHEET_ID'] ?? '4212503304529796';
 
-		if ( ! $global_sheet_id ) {
+		if (! $global_sheet_id) {
 			return self::from_hardcoded_values();
 		}
-		$global_sheet = $smartsheet_client->get_sheet( $global_sheet_id );
+		$global_sheet = $smartsheet_client->get_sheet($global_sheet_id);
 
-		if ( null === $global_sheet ) {
+		if (null === $global_sheet) {
 			return self::from_hardcoded_values();
 		}
 
 		$local_sheet    = null;
-		$local_sheet_id = planet4_get_option( 'analytics_local_smartsheet_id' ) ?? $_ENV['ANALYTICS_LOCAL_SMARTSHEET_ID'] ?? null;
+		$local_sheet_id = planet4_get_option('analytics_local_smartsheet_id') ?? $_ENV['ANALYTICS_LOCAL_SMARTSHEET_ID'] ?? null;
 
-		if ( $local_sheet_id ) {
-			$local_sheet = $local_sheet_id ? $smartsheet_client->get_sheet( $local_sheet_id ) : null;
+		if ($local_sheet_id) {
+			$local_sheet = $local_sheet_id ? $smartsheet_client->get_sheet($local_sheet_id) : null;
 		}
 
-		$instance = self::from_smartsheets( $global_sheet, $local_sheet );
+		$instance = self::from_smartsheets($global_sheet, $local_sheet);
 
-		wp_cache_add( self::CACHE_KEY, $instance->to_cache_array(), null, 300 );
+		wp_cache_add(self::CACHE_KEY, $instance->to_cache_array(), null, 300);
 
 		return $instance;
 	}
@@ -142,7 +147,8 @@ final class AnalyticsValues {
 	 *
 	 * @return static The instance.
 	 */
-	public static function from_hardcoded_values(): self {
+	public static function from_hardcoded_values(): self
+	{
 		$global_projects = [
 			[
 				'global_project_name' => 'All Eyes on the Amazon',
@@ -258,7 +264,7 @@ final class AnalyticsValues {
 			],
 		];
 
-		return new self( $global_projects );
+		return new self($global_projects);
 	}
 
 	/**
@@ -266,15 +272,16 @@ final class AnalyticsValues {
 	 *
 	 * @return string[] The options.
 	 */
-	public function global_projects_options(): array {
+	public function global_projects_options(): array
+	{
 		$names = array_map(
-			function ( $project ) {
+			function ($project) {
 				return $project['global_project_name'];
 			},
 			$this->global_projects
 		);
 
-		return [ 'not set' => __( '- Select Global Project -', 'planet4-master-theme-backend' ) ] + array_combine( $names, $names );
+		return [ 'not set' => __('- Select Global Project -', 'planet4-master-theme-backend') ] + array_combine($names, $names);
 	}
 
 	/**
@@ -282,20 +289,21 @@ final class AnalyticsValues {
 	 *
 	 * @return array
 	 */
-	public function local_projects_options(): array {
+	public function local_projects_options(): array
+	{
 		$local_projects_options = [];
-		if ( $this->local_projects ) {
+		if ($this->local_projects) {
 			$names = array_map(
-				function ( $project ) {
+				function ($project) {
 					return $project['local_project_name'];
 				},
 				$this->local_projects
 			);
 
-			$local_projects_options = array_combine( $names, $names );
+			$local_projects_options = array_combine($names, $names);
 		}
 
-		return [ 'not set' => __( '- Select Local Project -', 'planet4-master-theme-backend' ) ] + $local_projects_options;
+		return [ 'not set' => __('- Select Local Project -', 'planet4-master-theme-backend') ] + $local_projects_options;
 	}
 
 	/**
@@ -304,18 +312,18 @@ final class AnalyticsValues {
 	 * @param string $global_project_name The unique name of the project.
 	 * @return string|null The ID if the project is found, else null.
 	 */
-	public function get_id_for_global_project( string $global_project_name ): ?string {
+	public function get_id_for_global_project(string $global_project_name): ?string
+	{
 		$matching_project = null;
-		foreach ( $this->global_projects as $global_project ) {
-			if ( $global_project['global_project_name'] === $global_project_name ) {
+		foreach ($this->global_projects as $global_project) {
+			if ($global_project['global_project_name'] === $global_project_name) {
 				$matching_project = $global_project;
 			}
 		}
-		if ( empty( $matching_project ) ) {
+		if (empty($matching_project)) {
 			return null;
 		}
 
 		return $matching_project['tracking_id'];
 	}
 }
-

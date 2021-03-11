@@ -10,11 +10,11 @@ use UnexpectedValueException;
 use WP_Query;
 use WPML_Post_Element;
 
-
 /**
  * Abstract Class Search
  */
-abstract class Search {
+abstract class Search
+{
 
 	const POSTS_PER_LOAD        = 5;
 	const SHOW_SCROLL_TIMES     = 2;
@@ -104,19 +104,21 @@ abstract class Search {
 	/**
 	 * Initialize the class. Hook necessary actions and filters.
 	 */
-	protected function initialize() {
+	protected function initialize()
+	{
 		self::add_general_filters();
 	}
 
 	/**
 	 * Add filters that are needed by both the initial page load and subsequent ajax page loads.
 	 */
-	public static function add_general_filters(): void {
+	public static function add_general_filters(): void
+	{
 		// Call apply filters to catch issue in WPML's ElasticPress integration, which uses the wrong filter name.
 		add_filter(
 			'ep_formatted_args',
-			function ( $args ) {
-				return apply_filters( 'ep_search_args', $args );
+			function ($args) {
+				return apply_filters('ep_search_args', $args);
 			},
 			10,
 			1
@@ -125,8 +127,8 @@ abstract class Search {
 		// to be unintentionally translated while syncing.
 		add_filter(
 			'ep_index_posts_args',
-			function ( $args ) {
-				return array_merge( $args, [ 'suppress_filters' => true ] );
+			function ($args) {
+				return array_merge($args, [ 'suppress_filters' => true ]);
 			},
 			20
 		);
@@ -134,11 +136,11 @@ abstract class Search {
 		// when syncing ElasticSearch. We don't need `sm_cloud` in ES and we only need one of `_wp_attachment_image_alt`.
 		add_filter(
 			'ep_prepare_meta_data',
-			function ( $meta, $post ) {
-				if ( isset( $meta['sm_cloud'] ) ) {
-					unset( $meta['sm_cloud'] );
+			function ($meta, $post) {
+				if (isset($meta['sm_cloud'])) {
+					unset($meta['sm_cloud']);
 				}
-				if ( ! empty( $meta['_wp_attachment_image_alt'] ) ) {
+				if (! empty($meta['_wp_attachment_image_alt'])) {
 					$meta['_wp_attachment_image_alt'] = [ $meta['_wp_attachment_image_alt'][0] ];
 				}
 
@@ -157,14 +159,14 @@ abstract class Search {
 		// language in time that has the post available.
 		add_filter(
 			'ep_ignore_invalid_dates',
-			function ( $ignore, $post_id, $post ) {
+			function ($ignore, $post_id, $post) {
 				/**
 				 * @var SitePress
 				 */
 				global $sitepress;
-				if ( $sitepress ) {
-					$lang_code = ( new WPML_Post_Element( $post->ID, $sitepress ) )->get_language_code();
-					$sitepress->switch_lang( $lang_code );
+				if ($sitepress) {
+					$lang_code = ( new WPML_Post_Element($post->ID, $sitepress) )->get_language_code();
+					$sitepress->switch_lang($lang_code);
 				}
 			},
 			20,
@@ -173,7 +175,7 @@ abstract class Search {
 		// Specify which fields to fetch so that we don't need to fetch the post content.
 		add_filter(
 			'ep_formatted_args',
-			function ( $formatted_args, $args ) {
+			function ($formatted_args, $args) {
 				$formatted_args['_source'] = [
 					'post_id',
 					'ID',
@@ -207,7 +209,7 @@ abstract class Search {
 		// Make it return the post guid as that's where we put the external url for the archive post type.
 		add_filter(
 			'ep_search_post_return_args',
-			function ( $args ) {
+			function ($args) {
 				$args[] = 'guid';
 				$args[] = 'terms';
 
@@ -216,7 +218,7 @@ abstract class Search {
 		);
 		// Because of how the search is currently set up (using admin-ajax) this ElasticPress filter was not being
 		// applied for subsequent page loads, only for the initial one.
-		if ( ( ! isset( $_GET['orderby'] ) || '_score' === $_GET['orderby'] ) && wp_doing_ajax() ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if (( ! isset($_GET['orderby']) || '_score' === $_GET['orderby'] ) && wp_doing_ajax()) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			add_filter(
 				'ep_formatted_args',
 				[ new \ElasticPress\Feature\Search\Search(), 'weight_recent' ],
@@ -224,10 +226,10 @@ abstract class Search {
 				2
 			);
 		}
-		add_filter( 'posts_where', [ self::class, 'edit_search_mime_types' ] );
+		add_filter('posts_where', [ self::class, 'edit_search_mime_types' ]);
 		remove_filter(
 			'pre_get_posts',
-			[ Features::factory()->get_registered_feature( 'documents' ), 'setup_document_search' ],
+			[ Features::factory()->get_registered_feature('documents'), 'setup_document_search' ],
 			10
 		);
 		add_filter(
@@ -265,62 +267,63 @@ abstract class Search {
 		$this->search_query = $search_query;
 		$this->templates    = $templates;
 
-		if ( $context ) {
+		if ($context) {
 			$this->context = $context;
 		} else {
 			$this->context = Timber::get_context();
 
 			// Validate user input (sort, filters, etc).
-			if ( $this->validate( $selected_sort, $filters, $this->context ) ) {
+			if ($this->validate($selected_sort, $filters, $this->context)) {
 				$this->selected_sort = $selected_sort;
 				$this->filters       = $filters;
 			}
 
 			$this->posts = $this->get_posts();
 
-			if ( $this->posts ) {
-				$this->paged_posts = array_slice( $this->posts, 0, self::POSTS_PER_LOAD );
+			if ($this->posts) {
+				$this->paged_posts = array_slice($this->posts, 0, self::POSTS_PER_LOAD);
 			}
 
-			$this->current_page = ( 0 === get_query_var( 'paged' ) ) ? 1 : get_query_var( 'paged' );
+			$this->current_page = ( 0 === get_query_var('paged') ) ? 1 : get_query_var('paged');
 
-			$this->set_context( $this->context );
+			$this->set_context($this->context);
 		}
 	}
 
 	/**
 	 * Gets the paged posts that belong to the next page/load and are to be used with the twig template.
 	 */
-	public static function get_paged_posts() {
+	public static function get_paged_posts()
+	{
 		// If this is an ajax call.
-		if ( wp_doing_ajax() ) {
-			$search_action = filter_input( INPUT_GET, 'search-action', FILTER_SANITIZE_STRING );
-			$paged         = filter_input( INPUT_GET, 'paged', FILTER_SANITIZE_STRING );
+		if (wp_doing_ajax()) {
+			$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
+			$paged         = filter_input(INPUT_GET, 'paged', FILTER_SANITIZE_STRING);
 
 			// Check if call action is correct.
-			if ( 'get_paged_posts' === $search_action ) {
+			if ('get_paged_posts' === $search_action) {
 				$search_async = new static();
-				$search_async->set_context( $search_async->context );
-				$search_async->search_query = urldecode( filter_input( INPUT_GET, 'search_query', FILTER_SANITIZE_STRING ) );
+				$search_async->set_context($search_async->context);
+				$search_async->search_query = urldecode(filter_input(INPUT_GET, 'search_query', FILTER_SANITIZE_STRING));
 
 				// Get the decoded url query string and then use it as key for redis.
-				$query_string_full = urldecode( filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING ) );
-				$query_string      = str_replace( '&query-string=', '', strstr( $query_string_full, '&query-string=' ) );
+				$query_string_full = urldecode(filter_input(INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING));
+				$query_string      = str_replace('&query-string=', '', strstr($query_string_full, '&query-string='));
 
 				$search_async->current_page = $paged;
 
-				parse_str( $query_string, $filters_array );
+				parse_str($query_string, $filters_array);
 				$selected_sort    = $filters_array['orderby'] ?? self::DEFAULT_SORT;
 				$selected_filters = $filters_array['f'] ?? [];
 				$filters          = [];
 
 				// Handle submitted filter options.
-				if ( $selected_filters && is_array( $selected_filters ) ) {
-					foreach ( $selected_filters as $type => $filter_type ) {
-						if ( ! is_array( $filter_type ) ) {
+				if ($selected_filters && is_array($selected_filters)) {
+					foreach ($selected_filters as $type => $filter_type) {
+						if (! is_array($filter_type)) {
 							continue;
 						}
-						foreach ( $filter_type as $name => $id ) {
+						foreach ($filter_type as $name => $id) {
 							$filters[ $type ][] = [
 								'id'   => $id,
 								'name' => $name,
@@ -330,16 +333,16 @@ abstract class Search {
 				}
 
 				// Validate user input (sort, filters, etc).
-				if ( $search_async->validate( $selected_sort, $filters, $search_async->context ) ) {
+				if ($search_async->validate($selected_sort, $filters, $search_async->context)) {
 					$search_async->selected_sort = $selected_sort;
 					$search_async->filters       = $filters;
 				}
 
-				$search_async->paged_posts = $search_async->get_posts( $search_async->current_page );
+				$search_async->paged_posts = $search_async->get_posts($search_async->current_page);
 
 				// If there are paged results then set their context and send them back to client.
-				if ( $search_async->paged_posts ) {
-					$search_async->set_results_context( $search_async->context );
+				if ($search_async->paged_posts) {
+					$search_async->set_results_context($search_async->context);
 					$search_async->view_paged_posts();
 				}
 			}
@@ -355,21 +358,22 @@ abstract class Search {
 	 *
 	 * @return array The respective Timber Posts.
 	 */
-	protected function get_posts( $paged = 1 ) : array {
+	protected function get_posts($paged = 1): array
+	{
 		$template_posts = [];
 
-		$posts = $this->query_posts( $paged );
+		$posts = $this->query_posts($paged);
 
-		if ( empty( $posts ) ) {
-			add_action( 'wp_head', 'wp_no_robots' );
-			if ( ! headers_sent() ) {
-				header( 'P4-Search: no-results' );
+		if (empty($posts)) {
+			add_action('wp_head', 'wp_no_robots');
+			if (! headers_sent()) {
+				header('P4-Search: no-results');
 			}
 			return [];
 		}
 
-		foreach ( $posts as $post ) {
-			if ( PostArchive::POST_TYPE === $post->post_type ) {
+		foreach ($posts as $post) {
+			if (PostArchive::POST_TYPE === $post->post_type) {
 				$archive_post               = new stdClass();
 				$archive_post->id           = $post->ID;
 				$archive_post->post_title   = $post->post_title;
@@ -378,8 +382,8 @@ abstract class Search {
 				$archive_post->post_date    = $post->post_date_gmt;
 				$archive_post->post_excerpt = $post->post_excerpt;
 
-				if ( current_user_can( 'edit_posts' ) ) {
-					$archive_post->edit_link = get_edit_post_link( $post->ID );
+				if (current_user_can('edit_posts')) {
+					$archive_post->edit_link = get_edit_post_link($post->ID);
 				}
 
 				$template_posts[] = $archive_post;
@@ -388,15 +392,15 @@ abstract class Search {
 				$template_post->id            = $post->ID;
 				$template_post->link          = $post->permalink;
 				$template_post->preview       = $post->excerpt;
-				$thumbnail                    = get_the_post_thumbnail_url( $post->ID, 'thumbnail' );
-				$template_post->thumbnail_alt = get_the_post_thumbnail_caption( $post->ID );
+				$thumbnail                    = get_the_post_thumbnail_url($post->ID, 'thumbnail');
+				$template_post->thumbnail_alt = get_the_post_thumbnail_caption($post->ID);
 				$template_post->thumbnail     = $thumbnail;
 
 				$tags          = $post->terms['post_tag'] ?? [];
 				$p4_page_types = $post->terms['p4-page-type'] ?? [];
 				// @todo Ensure the term link is synced to ElasticSearch so we don't have to fetch it here.
-				$template_post->tags          = self::filter_existing_terms( $tags );
-				$template_post->p4_page_types = self::filter_existing_terms( $p4_page_types );
+				$template_post->tags          = self::filter_existing_terms($tags);
+				$template_post->p4_page_types = self::filter_existing_terms($p4_page_types);
 
 				$template_posts[] = $template_post;
 			}
@@ -412,31 +416,32 @@ abstract class Search {
 	 *
 	 * @return array The posts of the search.
 	 */
-	public function query_posts( $paged = 1 ) : array {
+	public function query_posts($paged = 1): array
+	{
 		// Set General Query arguments.
-		$args = $this->get_general_args( $paged );
+		$args = $this->get_general_args($paged);
 
 		// Set Filters Query arguments.
 		try {
-			$this->set_filters_args( $args );
-		} catch ( UnexpectedValueException $e ) {
+			$this->set_filters_args($args);
+		} catch (UnexpectedValueException $e) {
 			$this->context['exception'] = $e->getMessage();
 
 			return [];
 		}
 
 		// Set Engine Query arguments.
-		$this->set_engines_args( $args );
+		$this->set_engines_args($args);
 		add_action(
 			'ep_valid_response',
-			function ( $response ) {
+			function ($response) {
 				$this->aggregations = $response['aggregations'];
 				$this->query_time   = $response['took'];
 			}
 		);
 
 		$query = ( new WP_Query() );
-		$posts = $query->query( $args );
+		$posts = $query->query($args);
 
 		$this->total_matches = $query->found_posts;
 
@@ -450,7 +455,8 @@ abstract class Search {
 	 *
 	 * @return array
 	 */
-	protected function get_general_args( $paged ): array {
+	protected function get_general_args($paged): array
+	{
 		$args = [
 			'posts_per_page' => self::POSTS_PER_LOAD,
 			'no_found_rows'  => true,
@@ -459,11 +465,11 @@ abstract class Search {
 			'has_password'   => false,  // Skip password protected content.
 		];
 
-		if ( $paged > 1 ) {
+		if ($paged > 1) {
 			$args['paged'] = $paged;
 		}
 
-		if ( $this->search_query ) {
+		if ($this->search_query) {
 			$args['s']          = $this->search_query;
 			$args['meta_query'] = [
 				[
@@ -494,27 +500,27 @@ abstract class Search {
 					],
 				],
 			];
-			$args  = array_merge( $args, $args2 );
+			$args  = array_merge($args, $args2);
 		}
 
 		$args['s'] = $this->search_query;
 		// Add sort by date.
-		if ( wp_doing_ajax() ) {
+		if (wp_doing_ajax()) {
 			// Get the decoded url query string and then use it as key for redis.
-			$query_string_full = urldecode( filter_input( INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING ) );
+			$query_string_full = urldecode(filter_input(INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING));
 			$query_string      = str_replace(
 				'&query-string=',
 				'',
-				strstr( $query_string_full, '&query-string=' )
+				strstr($query_string_full, '&query-string=')
 			);
-			parse_str( $query_string, $filters_array );
+			parse_str($query_string, $filters_array);
 			$selected_sort = $filters_array['orderby'] ?? self::DEFAULT_SORT;
 		} else {
-			$selected_sort = filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_STRING );
+			$selected_sort = filter_input(INPUT_GET, 'orderby', FILTER_SANITIZE_STRING);
 		}
-		$selected_sort = sanitize_sql_orderby( $selected_sort );
+		$selected_sort = sanitize_sql_orderby($selected_sort);
 
-		if ( $selected_sort && self::DEFAULT_SORT !== $selected_sort ) {
+		if ($selected_sort && self::DEFAULT_SORT !== $selected_sort) {
 			$args['orderby'] = 'date';
 			// Order by post_date = Newest[desc]/Oldest[asc].
 			$args['order'] = 'post_date' === $selected_sort ? 'desc' : 'asc';
@@ -535,7 +541,8 @@ abstract class Search {
 	 *
 	 * @return array The post types that should be in search.
 	 */
-	private static function get_post_types() {
+	private static function get_post_types()
+	{
 		$types = [
 			'page',
 			'campaign',
@@ -543,7 +550,7 @@ abstract class Search {
 			'attachment',
 		];
 
-		if ( self::should_include_archive() ) {
+		if (self::should_include_archive()) {
 			$types[] = PostArchive::POST_TYPE;
 		}
 
@@ -555,8 +562,9 @@ abstract class Search {
 	 *
 	 * @return bool Whether archived content should be in the results.
 	 */
-	private static function should_include_archive(): bool {
-		$setting = planet4_get_option( 'include_archive_content_for' );
+	private static function should_include_archive(): bool
+	{
+		$setting = planet4_get_option('include_archive_content_for');
 
 		return 'all' === $setting || ( 'logged_in' === $setting && is_user_logged_in() );
 	}
@@ -569,13 +577,14 @@ abstract class Search {
 	 *
 	 * @return mixed|null All existing terms, with link.
 	 */
-	private static function filter_existing_terms( array $terms ) {
+	private static function filter_existing_terms(array $terms)
+	{
 		return array_reduce(
 			$terms,
-			static function ( $carry, $term ) {
-				$link = get_term_link( $term['term_id'] );
+			static function ($carry, $term) {
+				$link = get_term_link($term['term_id']);
 
-				if ( ! is_wp_error( $link ) ) {
+				if (! is_wp_error($link)) {
 					$term['link'] = $link;
 					$carry[]      = $term;
 				}
@@ -591,7 +600,7 @@ abstract class Search {
 	 *
 	 * @param array $args The search query args.
 	 */
-	abstract public function set_engines_args( &$args );
+	abstract public function set_engines_args(&$args);
 
 	/**
 	 * Applies user selected filters to the search if there are any and gets the filtered posts.
@@ -600,11 +609,12 @@ abstract class Search {
 	 *
 	 * @throws UnexpectedValueException When filter type is not recognized.
 	 */
-	public function set_filters_args( &$args ) {
-		if ( $this->filters ) {
-			foreach ( $this->filters as $type => $filter_type ) {
-				foreach ( $filter_type as $filter ) {
-					switch ( $type ) {
+	public function set_filters_args(&$args)
+	{
+		if ($this->filters) {
+			foreach ($this->filters as $type => $filter_type) {
+				foreach ($filter_type as $filter) {
+					switch ($type) {
 						case 'cat':
 							$args['tax_query'][] = [
 								'taxonomy' => 'category',
@@ -629,12 +639,12 @@ abstract class Search {
 							];
 							break;
 						case 'ctype':
-							switch ( $filter['id'] ) {
+							switch ($filter['id']) {
 								case 0:
 									$args['post_type']   = 'page';
 									$args['post_status'] = 'publish';
-									$options             = get_option( 'planet4_options' );
-									$args['post_parent'] = esc_sql( $options['act_page'] );
+									$options             = get_option('planet4_options');
+									$args['post_parent'] = esc_sql($options['act_page']);
 									break;
 								case 1:
 									$args['post_type']      = 'attachment';
@@ -644,8 +654,8 @@ abstract class Search {
 								case 2:
 									$args['post_type']             = 'page';
 									$args['post_status']           = 'publish';
-									$options                       = get_option( 'planet4_options' );
-									$args['post_parent__not_in'][] = esc_sql( $options['act_page'] );
+									$options                       = get_option('planet4_options');
+									$args['post_parent__not_in'][] = esc_sql($options['act_page']);
 									break;
 								case 3:
 									$args['post_type']   = 'post';
@@ -659,11 +669,11 @@ abstract class Search {
 									$args['post_type'] = 'archive';
 									break;
 								default:
-									throw new UnexpectedValueException( 'Unexpected content type!' );
+									throw new UnexpectedValueException('Unexpected content type!');
 							}
 							break;
 						default:
-							throw new UnexpectedValueException( 'Unexpected filter!' );
+							throw new UnexpectedValueException('Unexpected filter!');
 					}
 				}
 			}
@@ -675,14 +685,15 @@ abstract class Search {
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_context( &$context ) {
-		$this->set_general_context( $context );
+	protected function set_context(&$context)
+	{
+		$this->set_general_context($context);
 		try {
-			$this->set_filters_context( $context );
-		} catch ( UnexpectedValueException $e ) {
+			$this->set_filters_context($context);
+		} catch (UnexpectedValueException $e) {
 			$this->context['exception'] = $e->getMessage();
 		}
-		$this->set_results_context( $context );
+		$this->set_results_context($context);
 	}
 
 	/**
@@ -690,7 +701,8 @@ abstract class Search {
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_general_context( &$context ) {
+	protected function set_general_context(&$context)
+	{
 
 		// Search context.
 		$context['posts']         = $this->posts;
@@ -704,32 +716,32 @@ abstract class Search {
 		$context['page_category'] = 'Search Page';
 		$context['sort_options']  = [
 			'_score'        => [
-				'name'  => __( 'Most relevant', 'planet4-master-theme' ),
+				'name'  => __('Most relevant', 'planet4-master-theme'),
 				'order' => 'DESC',
 			],
 			'post_date'     => [
-				'name'  => __( 'Newest', 'planet4-master-theme' ),
+				'name'  => __('Newest', 'planet4-master-theme'),
 				'order' => 'DESC',
 			],
 			'post_date_asc' => [
-				'name'  => __( 'Oldest', 'planet4-master-theme' ),
+				'name'  => __('Oldest', 'planet4-master-theme'),
 				'order' => 'ASC',
 			],
 		];
 
-		if ( $this->search_query ) {
+		if ($this->search_query) {
 			$context['page_title'] = sprintf(
 				// translators: %1$d = Number of results.
-				_n( '%1$d result for \'%2$s\'', '%1$d results for \'%2$s\'', $context['found_posts'], 'planet4-master-theme' ),
+				_n('%1$d result for \'%2$s\'', '%1$d results for \'%2$s\'', $context['found_posts'], 'planet4-master-theme'),
 				$context['found_posts'],
 				$this->search_query
 			);
 		} else {
 			// translators: %d = Number of results.
-			$context['page_title'] = sprintf( _n( '%d result', '%d results', $context['found_posts'], 'planet4-master-theme' ), $context['found_posts'] );
+			$context['page_title'] = sprintf(_n('%d result', '%d results', $context['found_posts'], 'planet4-master-theme'), $context['found_posts']);
 		}
 
-		if ( is_user_logged_in() ) {
+		if (is_user_logged_in()) {
 			$context['query_time'] = $this->query_time;
 		}
 	}
@@ -741,15 +753,16 @@ abstract class Search {
 	 *
 	 * @throws UnexpectedValueException When filter type is not recognized.
 	 */
-	protected function set_filters_context( &$context ) {
+	protected function set_filters_context(&$context)
+	{
 		// Retrieve P4 settings in order to check that we add only categories that are children of the Issues category.
-		$options = get_option( 'planet4_options' );
+		$options = get_option('planet4_options');
 
 		// Category <-> Issue.
 		// Consider Issues that have multiple Categories.
-		$categories = get_categories( [ 'child_of' => $options['issues_parent_category'] ] );
-		if ( $categories ) {
-			foreach ( $categories as $category ) {
+		$categories = get_categories([ 'child_of' => $options['issues_parent_category'] ]);
+		if ($categories) {
+			foreach ($categories as $category) {
 				$context['categories'][ $category->term_id ] = [
 					'term_id' => $category->term_id,
 					'name'    => $category->name,
@@ -765,8 +778,8 @@ abstract class Search {
 				'hide_empty' => false,
 			]
 		);
-		if ( $tags ) {
-			foreach ( (array) $tags as $tag ) {
+		if ($tags) {
+			foreach ((array) $tags as $tag) {
 				// Tag filters.
 				$context['tags'][ $tag->term_id ] = [
 					'term_id' => $tag->term_id,
@@ -783,8 +796,8 @@ abstract class Search {
 				'hide_empty' => false,
 			]
 		);
-		if ( $page_types ) {
-			foreach ( (array) $page_types as $page_type ) {
+		if ($page_types) {
+			foreach ((array) $page_types as $page_type) {
 				// p4-page-type filters.
 				$context['page_types'][ $page_type->term_id ] = [
 					'term_id' => $page_type->term_id,
@@ -796,37 +809,37 @@ abstract class Search {
 
 		// Post Type (+Action) <-> Content Type.
 		$context['content_types']['0'] = [
-			'name'    => __( 'Action', 'planet4-master-theme' ),
+			'name'    => __('Action', 'planet4-master-theme'),
 			'results' => 0,
 		];
 		$context['content_types']['4'] = [
-			'name'    => __( 'Campaign', 'planet4-master-theme' ),
+			'name'    => __('Campaign', 'planet4-master-theme'),
 			'results' => 0,
 		];
 		$context['content_types']['1'] = [
-			'name'    => __( 'Document', 'planet4-master-theme' ),
+			'name'    => __('Document', 'planet4-master-theme'),
 			'results' => 0,
 		];
 		$context['content_types']['2'] = [
-			'name'    => __( 'Page', 'planet4-master-theme' ),
+			'name'    => __('Page', 'planet4-master-theme'),
 			'results' => 0,
 		];
 		$context['content_types']['3'] = [
-			'name'    => __( 'Post', 'planet4-master-theme' ),
+			'name'    => __('Post', 'planet4-master-theme'),
 			'results' => 0,
 		];
-		if ( self::should_include_archive() ) {
+		if (self::should_include_archive()) {
 			$context['content_types']['5'] = [
-				'name'    => __( 'Archive', 'planet4-master-theme' ),
+				'name'    => __('Archive', 'planet4-master-theme'),
 				'results' => 0,
 			];
 		}
 
 		// Keep track of which filters are already checked.
-		if ( $this->filters ) {
-			foreach ( $this->filters as $type => $filter_type ) {
-				foreach ( $filter_type as $filter ) {
-					switch ( $type ) {
+		if ($this->filters) {
+			foreach ($this->filters as $type => $filter_type) {
+				foreach ($filter_type as $filter) {
+					switch ($type) {
 						case 'cat':
 							$context['categories'][ $filter['id'] ]['checked'] = 'checked';
 							break;
@@ -840,26 +853,26 @@ abstract class Search {
 							$context['content_types'][ $filter['id'] ]['checked'] = 'checked';
 							break;
 						default:
-							throw new UnexpectedValueException( 'Unexpected filter!' );
+							throw new UnexpectedValueException('Unexpected filter!');
 					}
 				}
 			}
 		}
 
 		// Sort associative array with filters alphabetically.
-		if ( $context['categories'] ?? false ) {
+		if ($context['categories'] ?? false) {
 			uasort(
 				$context['categories'],
-				function ( $a, $b ) {
-					return strcmp( $a['name'], $b['name'] );
+				function ($a, $b) {
+					return strcmp($a['name'], $b['name']);
 				}
 			);
 		}
-		if ( $context['tags'] ?? false ) {
+		if ($context['tags'] ?? false) {
 			uasort(
 				$context['tags'],
-				function ( $a, $b ) {
-					return strcmp( $a['name'], $b['name'] );
+				function ($a, $b) {
+					return strcmp($a['name'], $b['name']);
 				}
 			);
 		}
@@ -875,12 +888,13 @@ abstract class Search {
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_results_context( &$context ) {
+	protected function set_results_context(&$context)
+	{
 
 		$posts = $this->posts ?? $this->paged_posts;
 
 		// Retrieve P4 settings in order to check that we add only categories that are children of the Issues category.
-		$options = get_option( 'planet4_options' );
+		$options = get_option('planet4_options');
 
 		// Pass planet4 settings.
 		$context['settings'] = $options;
@@ -890,17 +904,17 @@ abstract class Search {
 
 		$act_page_count = null;
 
-		if ( ! empty( $this->aggregations ) ) {
+		if (! empty($this->aggregations)) {
 			$aggs = $this->aggregations['with_post_filter'];
-			foreach ( $aggs['post_parent']['buckets'] as $parent_agg ) {
-				if ( $parent_agg['key'] === (int) $options['act_page'] ) {
+			foreach ($aggs['post_parent']['buckets'] as $parent_agg) {
+				if ($parent_agg['key'] === (int) $options['act_page']) {
 					$act_page_count                           = $parent_agg['doc_count'];
 					$context['content_types']['0']['results'] = $act_page_count;
 				}
 			}
 
-			foreach ( $aggs['post_type']['buckets'] as $post_type_agg ) {
-				if ( 'page' === $post_type_agg['key'] ) {
+			foreach ($aggs['post_type']['buckets'] as $post_type_agg) {
+				if ('page' === $post_type_agg['key']) {
 					// We show act pages as a separate item, so subtract there count from the other pages.
 					// But counts can be off in ES so don't use lower than 0.
 					$context['content_types']['2']['results'] = max(
@@ -908,24 +922,24 @@ abstract class Search {
 						$post_type_agg['doc_count'] - $act_page_count
 					);
 				}
-				if ( 'attachment' === $post_type_agg['key'] ) {
+				if ('attachment' === $post_type_agg['key']) {
 					$context['content_types']['1']['results'] = $post_type_agg['doc_count'];
 				}
-				if ( 'post' === $post_type_agg['key'] ) {
+				if ('post' === $post_type_agg['key']) {
 					$context['content_types']['3']['results'] = $post_type_agg['doc_count'];
 				}
-				if ( 'campaign' === $post_type_agg['key'] ) {
+				if ('campaign' === $post_type_agg['key']) {
 					$context['content_types']['4']['results'] = $post_type_agg['doc_count'];
 				}
-				if ( 'archive' === $post_type_agg['key'] && self::should_include_archive() ) {
+				if ('archive' === $post_type_agg['key'] && self::should_include_archive()) {
 					$context['content_types']['5']['results'] = $post_type_agg['doc_count'];
 				}
 			}
 
-			foreach ( $aggs['p4-page-type']['buckets'] as $p4_post_type_agg ) {
+			foreach ($aggs['p4-page-type']['buckets'] as $p4_post_type_agg) {
 				$p4_post_type_id = (int) $p4_post_type_agg['key'];
 
-				$p4_post_type = self::get_p4_post_type( $p4_post_type_id );
+				$p4_post_type = self::get_p4_post_type($p4_post_type_id);
 
 				$context['page_types'][ $p4_post_type_id ] = [
 					'term_id' => $p4_post_type_id,
@@ -934,65 +948,65 @@ abstract class Search {
 				];
 			}
 
-			foreach ( $aggs['categories']['buckets'] as $category_agg ) {
+			foreach ($aggs['categories']['buckets'] as $category_agg) {
 				// TODO get the parent from ES so no fetch is needed here.
-				$category = get_category( $category_agg['key'] );
+				$category = get_category($category_agg['key']);
 
 				// Category <-> Issue.
 				// Consider Issues that have multiple Categories.
-				if ( $category->parent === (int) $options['issues_parent_category'] ) {
+				if ($category->parent === (int) $options['issues_parent_category']) {
 					$context['categories'][ $category->term_id ]['results'] = $category_agg['doc_count'];
 				}
 			}
 
-			foreach ( $aggs['tags']['buckets'] as $tag_agg ) {
+			foreach ($aggs['tags']['buckets'] as $tag_agg) {
 				// Tag filters.
-				$tag = get_tag( $tag_agg['key'] );
+				$tag = get_tag($tag_agg['key']);
 
 				$context['tags'][ $tag->term_id ]['results'] = $tag_agg['doc_count'];
 			}
 		}
 
-		foreach ( (array) $posts as $post ) {
+		foreach ((array) $posts as $post) {
 			// Post Type (+Action) <-> Content Type.
-			switch ( $post->post_type ) {
+			switch ($post->post_type) {
 				case 'page':
-					if ( $post->post_parent === (int) $options['act_page'] ) {
-						$content_type_text = __( 'ACTION', 'planet4-master-theme' );
+					if ($post->post_parent === (int) $options['act_page']) {
+						$content_type_text = __('ACTION', 'planet4-master-theme');
 						$content_type      = 'action';
 					} else {
-						$content_type_text = __( 'PAGE', 'planet4-master-theme' );
+						$content_type_text = __('PAGE', 'planet4-master-theme');
 						$content_type      = 'page';
 					}
 					break;
 				case 'campaign':
-					$content_type_text = __( 'CAMPAIGN', 'planet4-master-theme' );
+					$content_type_text = __('CAMPAIGN', 'planet4-master-theme');
 					$content_type      = 'campaign';
 					break;
 				case 'attachment':
-					$content_type_text = __( 'DOCUMENT', 'planet4-master-theme' );
+					$content_type_text = __('DOCUMENT', 'planet4-master-theme');
 					$content_type      = 'document';
 					break;
 				case 'post':
-					$content_type_text = __( 'POST', 'planet4-master-theme' );
+					$content_type_text = __('POST', 'planet4-master-theme');
 					$content_type      = 'post';
 					break;
 				case PostArchive::POST_TYPE:
-					$content_type_text = __( 'Archive', 'planet4-master-theme' );
+					$content_type_text = __('Archive', 'planet4-master-theme');
 					$content_type      = 'archive';
 					break;
 				default:
 					continue 2;     // Ignore other post_types and continue with next $post.
 			}
 
-			if ( ! isset( $post->ID ) ) {
+			if (! isset($post->ID)) {
 				$post->ID = $post->link;
 			}
 			$post->content_type_text = $content_type_text;
 			$post->content_type      = $content_type;
 
 			// Page Type <-> Category. This taxonomy is used only for Posts.
-			if ( 'post' === $post->post_type && ! empty( $post->terms['p4-page-type'] ) ) {
+			if ('post' === $post->post_type && ! empty($post->terms['p4-page-type'])) {
 				$post->page_types = [
 					self::get_p4_post_type(
 						$post->terms['p4-page-type'][0]
@@ -1009,11 +1023,12 @@ abstract class Search {
 	 * @return mixed|null The p4 page type.
 	 * @todo Get this from ES.
 	 */
-	private static function get_p4_post_type( $id ) {
-		$p4_post_types = get_terms( 'p4-page-type' );
+	private static function get_p4_post_type($id)
+	{
+		$p4_post_types = get_terms('p4-page-type');
 
-		foreach ( $p4_post_types as $p4_post_type ) {
-			if ( $id === $p4_post_type->term_id ) {
+		foreach ($p4_post_types as $p4_post_type) {
+			if ($id === $p4_post_type->term_id) {
 				return $p4_post_type;
 			}
 		}
@@ -1028,13 +1043,14 @@ abstract class Search {
 	 *
 	 * @return string The edited WHERE clause.
 	 */
-	public static function edit_search_mime_types( $where ) : string {
+	public static function edit_search_mime_types($where): string
+	{
 		global $wpdb;
 
-		$search_action = filter_input( INPUT_GET, 'search-action', FILTER_SANITIZE_STRING );
+		$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
 
-		if ( ( ! is_admin() && is_search() ) || ( wp_doing_ajax() && ( 'get_paged_posts' === $search_action ) ) ) {
-			$mime_types = implode( ',', self::DOCUMENT_TYPES );
+		if (( ! is_admin() && is_search() ) || ( wp_doing_ajax() && ( 'get_paged_posts' === $search_action ) )) {
+			$mime_types = implode(',', self::DOCUMENT_TYPES);
 			$where     .= ' AND ' . $wpdb->posts . '.post_mime_type IN("' . $mime_types . '","") ';
 		}
 
@@ -1050,21 +1066,22 @@ abstract class Search {
 	 *
 	 * @return bool True if validation is ok, false if validation fails.
 	 */
-	public function validate( &$selected_sort, &$filters, $context ): bool {
-		$selected_sort = filter_var( $selected_sort, FILTER_SANITIZE_STRING );
+	public function validate(&$selected_sort, &$filters, $context): bool
+	{
+		$selected_sort = filter_var($selected_sort, FILTER_SANITIZE_STRING);
 
 		if (
-			! isset( $context['sort_options'] )
-			|| ! array_key_exists( $selected_sort, $context['sort_options'] )
+			! isset($context['sort_options'])
+			|| ! array_key_exists($selected_sort, $context['sort_options'])
 		) {
 			$selected_sort = self::DEFAULT_SORT;
 		}
 
-		if ( $filters ) {
-			foreach ( $filters as &$filter_type ) {
-				foreach ( $filter_type as &$filter ) {
-					$filter['id'] = filter_var( $filter['id'], FILTER_VALIDATE_INT );
-					if ( false === $filter['id'] || null === $filter['id'] || $filter['id'] < 0 ) {
+		if ($filters) {
+			foreach ($filters as &$filter_type) {
+				foreach ($filter_type as &$filter) {
+					$filter['id'] = filter_var($filter['id'], FILTER_VALIDATE_INT);
+					if (false === $filter['id'] || null === $filter['id'] || $filter['id'] < 0) {
 						return false;
 					}
 				}
@@ -1079,11 +1096,12 @@ abstract class Search {
 	 *
 	 * @param array|null $args The array with the data for the pagination.
 	 */
-	public function add_load_more( $args = null ) {
+	public function add_load_more($args = null)
+	{
 		$this->context['load_more'] = $args ?? [
 			'posts_per_load' => self::POSTS_PER_LOAD,
 			// Translators: %s = number of results per page.
-			'button_text'    => sprintf( __( 'Show %s more results', 'planet4-master-theme' ), self::POSTS_PER_LOAD ),
+			'button_text'    => sprintf(__('Show %s more results', 'planet4-master-theme'), self::POSTS_PER_LOAD),
 			'async'          => true,
 		];
 	}
@@ -1091,28 +1109,30 @@ abstract class Search {
 	/**
 	 * View the Search page template.
 	 */
-	public function view() {
-		Timber::render( $this->templates, $this->context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT );
+	public function view()
+	{
+		Timber::render($this->templates, $this->context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
 	}
 
 	/**
 	 * View the paged posts of the next page/load.
 	 */
-	public function view_paged_posts() {
+	public function view_paged_posts()
+	{
 		// TODO - The $paged_context related code should be transferred to set_results_context method for better separation of concerns.
-		if ( $this->paged_posts ) {
-			$paged_context['settings'] = get_option( 'planet4_options' );
+		if ($this->paged_posts) {
+			$paged_context['settings'] = get_option('planet4_options');
 
 			$paged_context['dummy_thumbnail'] = get_template_directory_uri() . self::DUMMY_THUMBNAIL;
 
-			foreach ( $this->paged_posts as $index => $post ) {
+			foreach ($this->paged_posts as $index => $post) {
 				$paged_context['post'] = $post;
-				if ( 0 === $index % self::POSTS_PER_LOAD ) {
+				if (0 === $index % self::POSTS_PER_LOAD) {
 					$paged_context['first_of_the_page'] = true;
 				} else {
 					$paged_context['first_of_the_page'] = false;
 				}
-				Timber::render( [ 'tease-search.twig' ], $paged_context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT );
+				Timber::render([ 'tease-search.twig' ], $paged_context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
 			}
 		}
 	}
@@ -1126,17 +1146,18 @@ abstract class Search {
 	 * @return mixed The args with exclusion of unwanted ids.
 	 * @throws Exception\SqlInIsEmpty Well it really won't unless we make self::DOCUMENT_TYPES into an empty array.
 	 */
-	public static function exclude_unwanted_attachments( $args ) {
+	public static function exclude_unwanted_attachments($args)
+	{
 		global $wpdb;
 
 		$params = new SqlParameters();
 
-		$sql = 'SELECT id FROM ' . $params->identifier( $wpdb->posts )
+		$sql = 'SELECT id FROM ' . $params->identifier($wpdb->posts)
 			. ' WHERE post_type = "attachment"'
-			. ' AND post_mime_type NOT IN ' . $params->string_list( self::DOCUMENT_TYPES );
+			. ' AND post_mime_type NOT IN ' . $params->string_list(self::DOCUMENT_TYPES);
 
 		$unwanted_attachment_ids = $wpdb->get_col(
-			$wpdb->prepare( $sql, $params->get_values() ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->prepare($sql, $params->get_values()) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
 
 		$args['post__not_in'] = $unwanted_attachment_ids;
@@ -1151,7 +1172,8 @@ abstract class Search {
 	 *
 	 * @return mixed The args with exclusion of password protected content.
 	 */
-	public static function hide_password_protected_content( $args ) {
+	public static function hide_password_protected_content($args)
+	{
 		$args['has_password'] = false;
 
 		return $args;

@@ -8,7 +8,8 @@ use WP_Error;
 /**
  * Handles calling the SmartSheet API.
  */
-final class SmartsheetClient {
+final class SmartsheetClient
+{
 
 	/**
 	 * @var string The API key to use for the requests.
@@ -20,7 +21,8 @@ final class SmartsheetClient {
 	 *
 	 * @param string $api_key For authenticating to the SmartSheet API.
 	 */
-	private function __construct( string $api_key ) {
+	private function __construct(string $api_key)
+	{
 		$this->api_key = $api_key;
 	}
 
@@ -31,8 +33,9 @@ final class SmartsheetClient {
 	 *
 	 * @return static The instance.
 	 */
-	public static function from_api_key( string $api_key ): self {
-		return new self( $api_key );
+	public static function from_api_key(string $api_key): self
+	{
+		return new self($api_key);
 	}
 
 	/**
@@ -42,18 +45,19 @@ final class SmartsheetClient {
 	 *
 	 * @return Smartsheet|null The sheet if found, otherwise null.
 	 */
-	public function get_sheet( string $sheet_id ): ?Smartsheet {
+	public function get_sheet(string $sheet_id): ?Smartsheet
+	{
 		$url = "https://api.smartsheet.com/2.0/sheets/$sheet_id";
 
-		$response = $this->request( 'GET', $url );
+		$response = $this->request('GET', $url);
 
-		if ( is_wp_error( $response ) ) {
+		if (is_wp_error($response)) {
 			return null;
 		}
 
 		try {
-			return Smartsheet::from_api_response( json_decode( $response['body'], true ) );
-		} catch ( InvalidArgumentException $exception ) {
+			return Smartsheet::from_api_response(json_decode($response['body'], true));
+		} catch (InvalidArgumentException $exception) {
 			return null;
 		}
 	}
@@ -66,7 +70,8 @@ final class SmartsheetClient {
 	 *
 	 * @return array|WP_Error The response or an error.
 	 */
-	private function request( string $method, string $url ) {
+	private function request(string $method, string $url)
+	{
 		return wp_remote_request(
 			$url,
 			[

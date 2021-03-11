@@ -7,13 +7,15 @@ use WP_CLI;
 /**
  * Base class for WP_CLI commands.
  */
-abstract class Command {
+abstract class Command
+{
 	/**
 	 * Registers the command.
 	 *
 	 * @throws \Exception If WP_CLI doesn't like what we register.
 	 */
-	public static function register(): void {
+	public static function register(): void
+	{
 		WP_CLI::add_command(
 			static::get_name(),
 			[ static::class, 'execute' ],
@@ -43,5 +45,5 @@ abstract class Command {
 	 * @param array|null $args Positional arguments.
 	 * @param array|null $assoc_args Named arguments.
 	 */
-	abstract public static function execute( ?array $args, ?array $assoc_args ): void;
+	abstract public static function execute(?array $args, ?array $assoc_args): void;
 }

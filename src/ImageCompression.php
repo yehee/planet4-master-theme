@@ -14,7 +14,8 @@ require_once ABSPATH . WPINC . '/class-wp-image-editor-imagick.php';
 /**
  * Class ImageCompression
  */
-class ImageCompression extends WP_Image_Editor_Imagick {
+class ImageCompression extends WP_Image_Editor_Imagick
+{
 
 	/**
 	 * Image compression filter.
@@ -34,31 +35,32 @@ class ImageCompression extends WP_Image_Editor_Imagick {
 	 * @return bool|WP_Error
 	 * @since 1.9
 	 */
-	protected function thumbnail_image( $dst_w, $dst_h, $filter_name = 'FILTER_TRIANGLE', $strip_meta = true ) {
-		if ( $this->filter ) {
+	protected function thumbnail_image($dst_w, $dst_h, $filter_name = 'FILTER_TRIANGLE', $strip_meta = true)
+	{
+		if ($this->filter) {
 			$filter_name = $this->filter;
 		}
-		parent::thumbnail_image( $dst_w, $dst_h, $filter_name, $strip_meta );
+		parent::thumbnail_image($dst_w, $dst_h, $filter_name, $strip_meta);
 
 		// The order of methods applied is: Resize -> Sharpen -> Compress.
 		try {
 			// Sharpen image after it has been resized.
-			if ( 'image/jpeg' === $this->mime_type ) {
-				if ( is_callable( [ $this->image, 'unsharpMaskImage' ] ) ) {
-					$this->image->unsharpMaskImage( 1, 0.45, 3, 0 );
+			if ('image/jpeg' === $this->mime_type) {
+				if (is_callable([ $this->image, 'unsharpMaskImage' ])) {
+					$this->image->unsharpMaskImage(1, 0.45, 3, 0);
 				}
 			}
-		} catch ( Exception $e ) {
-			return new WP_Error( 'image_sharpening_error', $e->getMessage() );
+		} catch (Exception $e) {
+			return new WP_Error('image_sharpening_error', $e->getMessage());
 		}
 
 		try {
 			// Compress image after it has been sharpened.
-			if ( is_callable( [ $this->image, 'setInterlaceScheme' ] ) && defined( 'Imagick::INTERLACE_PLANE' ) ) {
-				$this->image->setInterlaceScheme( Imagick::INTERLACE_PLANE );
+			if (is_callable([ $this->image, 'setInterlaceScheme' ]) && defined('Imagick::INTERLACE_PLANE')) {
+				$this->image->setInterlaceScheme(Imagick::INTERLACE_PLANE);
 			}
-		} catch ( Exception $e ) {
-			return new WP_Error( 'image_resize_error', $e->getMessage() );
+		} catch (Exception $e) {
+			return new WP_Error('image_resize_error', $e->getMessage());
 		}
 	}
 }

@@ -7,14 +7,16 @@ use P4\MasterTheme\Activator;
 /**
  * Class RunActivator
  */
-class RunActivator extends Command {
+class RunActivator extends Command
+{
 
 	/**
 	 * The name to access the command.
 	 *
 	 * @return string The command name.
 	 */
-	protected static function get_name(): string {
+	protected static function get_name(): string
+	{
 		return 'p4-run-activator';
 	}
 
@@ -23,7 +25,8 @@ class RunActivator extends Command {
 	 *
 	 * @return string The description text.
 	 */
-	protected static function get_short_description(): string {
+	protected static function get_short_description(): string
+	{
 		return 'Update roles in DB and run migrations scripts';
 	}
 
@@ -33,7 +36,8 @@ class RunActivator extends Command {
 	 * @param array|null $args Positional arguments.
 	 * @param array|null $assoc_args Named arguments.
 	 */
-	public static function execute( ?array $args, ?array $assoc_args ): void {
+	public static function execute(?array $args, ?array $assoc_args): void
+	{
 		Activator::run();
 	}
 }

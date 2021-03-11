@@ -5,7 +5,8 @@ namespace P4\MasterTheme\ImageArchive;
 /**
  * Entity for sizes of an image.
  */
-class ImageSize implements \JsonSerializable {
+class ImageSize implements \JsonSerializable
+{
 	/**
 	 * @var string The media url.
 	 */
@@ -28,7 +29,8 @@ class ImageSize implements \JsonSerializable {
 	 *
 	 * @return self[] All available sizes from the data.
 	 */
-	public static function all_from_api_response( $data ): array {
+	public static function all_from_api_response($data): array
+	{
 		$keys = [
 			'Path_TR7',
 			'Path_TR1_COMP_SMALL',
@@ -41,9 +43,8 @@ class ImageSize implements \JsonSerializable {
 
 		return array_reduce(
 			$keys,
-			static function ( $carry, $key ) use ( $data ) {
-				if ( ! empty( $data[ $key ]['URI'] ) ) {
-
+			static function ($carry, $key) use ($data) {
+				if (! empty($data[ $key ]['URI'])) {
 					$size = new self();
 
 					$size->url    = $data[ $key ]['URI'];
@@ -64,7 +65,8 @@ class ImageSize implements \JsonSerializable {
 	 *
 	 * @return array
 	 */
-	public function jsonSerialize(): array {
+	public function jsonSerialize(): array
+	{
 		return [
 			'url'    => $this->url,
 			'width'  => $this->width,
@@ -77,7 +79,8 @@ class ImageSize implements \JsonSerializable {
 	 *
 	 * @return string The url.
 	 */
-	public function getUrl(): string {
+	public function getUrl(): string
+	{
 		return $this->url;
 	}
 
@@ -86,7 +89,8 @@ class ImageSize implements \JsonSerializable {
 	 *
 	 * @return int The width.
 	 */
-	public function get_width() {
+	public function get_width()
+	{
 		return $this->width;
 	}
 }

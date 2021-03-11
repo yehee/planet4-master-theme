@@ -1,4 +1,5 @@
 <?php
+
 /**
  * P4 Test Case Class
  *
@@ -8,12 +9,14 @@
 /**
  * Class P4_TestCase.
  */
-class P4_TestCase extends WP_UnitTestCase {
+class P4_TestCase extends WP_UnitTestCase
+{
 
 	/**
 	 * Setup test
 	 */
-	public function setUp() {
+	public function setUp()
+	{
 		parent::setUp();
 		$this->initialize_planet4_data();
 		require_once get_template_directory() . '/functions.php';
@@ -23,7 +26,8 @@ class P4_TestCase extends WP_UnitTestCase {
 	/**
 	 * Use wp unit testcase factories to create data in database for the tests.
 	 */
-	private function initialize_planet4_data() {
+	private function initialize_planet4_data()
+	{
 
 		// Create a user with editor role.
 		$this->factory->user->create(
@@ -42,8 +46,8 @@ class P4_TestCase extends WP_UnitTestCase {
 		);
 
 		// Get admin user.
-		$user = get_user_by( 'login', 'admin' );
-		wp_set_current_user( $user->ID );
+		$user = get_user_by('login', 'admin');
+		wp_set_current_user($user->ID);
 
 		// Create Act & Explore pages
 		// Accepts the same arguments as wp_insert_post.
@@ -80,7 +84,7 @@ class P4_TestCase extends WP_UnitTestCase {
 			]
 		);
 
-		$issues_cat = get_category_by_slug( 'issues' );
+		$issues_cat = get_category_by_slug('issues');
 		$this->factory->category->create(
 			[
 				'name'        => 'Nature',
@@ -123,6 +127,6 @@ class P4_TestCase extends WP_UnitTestCase {
 			]
 		);
 
-		wp_set_current_user( 0 );
+		wp_set_current_user(0);
 	}
 }

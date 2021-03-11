@@ -5,7 +5,8 @@ namespace P4\MasterTheme;
 /**
  * Class Sitemap
  */
-class Sitemap {
+class Sitemap
+{
 
 	/**
 	 * Limit the number of evergreen pages
@@ -17,12 +18,13 @@ class Sitemap {
 	 *
 	 * @return array
 	 */
-	public function get_actions() : array {
-		$options   = get_option( 'planet4_options' );
+	public function get_actions(): array
+	{
+		$options   = get_option('planet4_options');
 		$parent_id = $options['act_page'];
 		$actions   = [];
 
-		if ( 0 !== absint( $parent_id ) ) {
+		if (0 !== absint($parent_id)) {
 			$args    = [
 				'post_type'        => 'page',
 				'post_status'      => 'publish',
@@ -32,15 +34,15 @@ class Sitemap {
 				'suppress_filters' => false,
 				'numberposts'      => -1,
 			];
-			$actions = get_posts( $args );
+			$actions = get_posts($args);
 		}
 
 		$actions_data = [];
-		if ( is_array( $actions ) && $actions ) {
-			foreach ( $actions as $action ) {
+		if (is_array($actions) && $actions) {
+			foreach ($actions as $action) {
 				$actions_data[] = [
 					'title' => $action->post_title,
-					'link'  => get_permalink( $action->ID ),
+					'link'  => get_permalink($action->ID),
 				];
 			}
 		}
@@ -53,12 +55,13 @@ class Sitemap {
 	 *
 	 * @return array
 	 */
-	public function get_issues() : array {
-		$options   = get_option( 'planet4_options' );
+	public function get_issues(): array
+	{
+		$options   = get_option('planet4_options');
 		$parent_id = $options['explore_page'];
 		$issues    = [];
 
-		if ( 0 !== absint( $parent_id ) ) {
+		if (0 !== absint($parent_id)) {
 			$args   = [
 				'post_type'        => 'page',
 				'post_status'      => 'publish',
@@ -68,29 +71,28 @@ class Sitemap {
 				'suppress_filters' => false,
 				'numberposts'      => -1,
 			];
-			$issues = get_posts( $args );
+			$issues = get_posts($args);
 		}
 
 		$issues_data = [];
-		if ( is_array( $issues ) && $issues ) {
-			foreach ( $issues as $issue ) {
-
+		if (is_array($issues) && $issues) {
+			foreach ($issues as $issue) {
 				// Get campaigns for this issue.
-				$page_tags = wp_get_post_tags( $issue->ID );
+				$page_tags = wp_get_post_tags($issue->ID);
 				$tags      = [];
 
-				if ( is_array( $page_tags ) && $page_tags ) {
-					foreach ( $page_tags as $page_tag ) {
+				if (is_array($page_tags) && $page_tags) {
+					foreach ($page_tags as $page_tag) {
 						$tags[] = [
 							'name' => $page_tag->name,
-							'link' => get_tag_link( $page_tag ),
+							'link' => get_tag_link($page_tag),
 						];
 					}
 				}
 
 				$issues_data[] = [
 					'title'     => $issue->post_title,
-					'link'      => get_permalink( $issue->ID ),
+					'link'      => get_permalink($issue->ID),
 					'campaigns' => $tags,
 				];
 			}
@@ -104,7 +106,8 @@ class Sitemap {
 	 *
 	 * @return array
 	 */
-	public function get_evergreen_pages() : array {
+	public function get_evergreen_pages(): array
+	{
 
 		$args  = [
 			'post_type'        => 'page',
@@ -116,14 +119,14 @@ class Sitemap {
 			'suppress_filters' => false,
 			'numberposts'      => self::MAX_EVERGREEN_PAGES,
 		];
-		$pages = get_posts( $args );
+		$pages = get_posts($args);
 
 		$evergreen_data = [];
-		if ( is_array( $pages ) && $pages ) {
-			foreach ( $pages as $page ) {
+		if (is_array($pages) && $pages) {
+			foreach ($pages as $page) {
 				$evergreen_data[] = [
 					'title' => $page->post_title,
-					'link'  => get_permalink( $page->ID ),
+					'link'  => get_permalink($page->ID),
 				];
 			}
 		}
@@ -136,7 +139,8 @@ class Sitemap {
 	 *
 	 * @return array
 	 */
-	public function get_page_types() : array {
+	public function get_page_types(): array
+	{
 
 		$article_types = get_terms(
 			[
@@ -147,11 +151,11 @@ class Sitemap {
 		);
 
 		$article_types_data = [];
-		if ( is_array( $article_types ) && $article_types ) {
-			foreach ( $article_types as $article_type ) {
+		if (is_array($article_types) && $article_types) {
+			foreach ($article_types as $article_type) {
 				$article_types_data[] = [
 					'name' => $article_type->name,
-					'link' => get_term_link( $article_type->term_id ),
+					'link' => get_term_link($article_type->term_id),
 				];
 			}
 		}

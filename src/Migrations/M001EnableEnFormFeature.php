@@ -10,7 +10,8 @@ use P4\MasterTheme\Settings;
 /**
  * Turn on the EN form feature everywhere.
  */
-class M001EnableEnFormFeature extends MigrationScript {
+class M001EnableEnFormFeature extends MigrationScript
+{
 
 	/**
 	 * Perform the actual migration.
@@ -19,10 +20,11 @@ class M001EnableEnFormFeature extends MigrationScript {
 	 *
 	 * @return void
 	 */
-	protected static function execute( MigrationRecord $record ): void {
-		$settings = get_option( Settings::KEY, [] );
+	protected static function execute(MigrationRecord $record): void
+	{
+		$settings = get_option(Settings::KEY, []);
 
 		$settings[ Features::ENGAGING_NETWORKS ] = 'on';
-		update_option( Settings::KEY, $settings );
+		update_option(Settings::KEY, $settings);
 	}
 }

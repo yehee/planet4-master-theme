@@ -1,4 +1,5 @@
 <?php
+
 /**
  * MasterThemeTest Class
  *
@@ -10,7 +11,8 @@ use P4\MasterTheme\MasterSite;
 /**
  * Class P4MasterThemeTest
  */
-class P4MasterThemeTest extends P4_TestCase {
+class P4MasterThemeTest extends P4_TestCase
+{
 
 	/**
 	 * Setup test
@@ -22,26 +24,29 @@ class P4MasterThemeTest extends P4_TestCase {
 	/**
 	 * Tear down
 	 */
-	public function tearDown() {
-		switch_theme( 'planet4-master-theme' );
+	public function tearDown()
+	{
+		switch_theme('planet4-master-theme');
 	}
 
 	/**
 	 * Test functions
 	 */
-	public function testFunctionsPHP() {
+	public function testFunctionsPHP()
+	{
 		$context = Timber::get_context();
-		$this->assertEquals( MasterSite::class, get_class( $context['site'] ) );
-		$this->assertTrue( current_theme_supports( 'post-thumbnails' ) );
-		$this->assertEquals( 'bar', $context['foo'] );
+		$this->assertEquals(MasterSite::class, get_class($context['site']));
+		$this->assertTrue(current_theme_supports('post-thumbnails'));
+		$this->assertEquals('bar', $context['foo']);
 	}
 
 	/**
 	 * Test loading
 	 */
-	public function testLoading() {
-		$str = Timber::compile( 'tease.twig' );
-		$this->assertStringStartsWith( '<article class="tease tease-" id="tease-">', $str );
-		$this->assertStringEndsWith( '</article>', $str );
+	public function testLoading()
+	{
+		$str = Timber::compile('tease.twig');
+		$this->assertStringStartsWith('<article class="tease tease-" id="tease-">', $str);
+		$this->assertStringEndsWith('</article>', $str);
 	}
 }
