@@ -1,27 +1,35 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace P4\MasterTheme;
 
+use function filter_input;
+use const INPUT_GET;
+use const FILTER_SANITIZE_STRING;
+use function get_template_directory;
+use function filectime;
+
 use RuntimeException;
+use function str_replace;
+use function ltrim;
+use function get_template_directory_uri;
 
 /**
  * Class Loader.
  * Loads all necessary classes for Planet4 Master Theme.
  */
+
 final class Loader
 {
-	/**
-	 * A static instance of Loader.
-	 *
-	 * @var Loader $instance
-	 */
-	private static $instance;
+
 	/**
 	 * Indexed array of all the classes/services that are needed.
 	 *
 	 * @var array $services
 	 */
 	private $services;
+
 	/**
 	 * Indexed array of all the classes/services that are used by Planet4.
 	 *
@@ -30,27 +38,18 @@ final class Loader
 	private $default_services;
 
 	/**
-	 * Singleton creational pattern.
-	 * Makes sure there is only one instance at all times.
+	 * A static instance of Loader.
 	 *
-	 * @param array $services The Controller services to inject.
-	 *
-	 * @return Loader
+	 * @var \P4\MasterTheme\Loader $instance
 	 */
-	public static function get_instance($services = []): Loader
-	{
-		if (! isset(self::$instance)) {
-			self::$instance = new self($services);
-		}
-		return self::$instance;
-	}
+	private static $instance;
 
 	/**
 	 * Loader constructor.
 	 *
 	 * @param array $services The dependencies to inject.
 	 */
-	private function __construct($services)
+	private function __construct(array $services)
 	{
 		$this->load_services($services);
 		$this->add_filters();
@@ -58,11 +57,36 @@ final class Loader
 	}
 
 	/**
+	 * Singleton creational pattern.
+	 * Makes sure there is only one instance at all times.
+	 *
+	 * @param array $services The Controller services to inject.
+	 */
+	public static function get_instance(array $services = []): Loader
+	{
+		if (! isset(self::$instance)) {
+			self::$instance = new self($services);
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Gets the loaded services.
+	 *
+	 * @return array The loaded services.
+	 */
+	public function get_services(): array
+	{
+		return $this->services;
+	}
+
+	/**
 	 * Inject dependencies.
 	 *
 	 * @param array $services The dependencies to inject.
 	 */
-	private function load_services($services)
+	private function load_services(array $services): void
 	{
 
 		$this->default_services = [
@@ -77,7 +101,7 @@ final class Loader
 			MasterSite::class,
 		];
 
-		if (is_admin()) {
+		if (\is_admin()) {
 			global $pagenow;
 
 			// Load P4 Control Panel only on Dashboard page.
@@ -86,13 +110,13 @@ final class Loader
 			$this->default_services[] = ImageArchive\Rest::class;
 
 			// Load P4 Metaboxes only when adding/editing a new Page/Post/Campaign.
-			if ('post-new.php' === $pagenow || 'post.php' === $pagenow) {
+			if ($pagenow === 'post-new.php' || 'post.php' === $pagenow) {
 				$this->default_services[] = MetaboxRegister::class;
-				add_action(
+				\add_action(
 					'cmb2_save_field_p4_campaign_name',
-					[ MetaboxRegister::class, 'save_global_project_id' ],
+					[MetaboxRegister::class, 'save_global_project_id'],
 					10,
-					3
+					3,
 				);
 			}
 
@@ -102,7 +126,10 @@ final class Loader
 			}
 
 			// Load `CampaignExporter` class on admin campaign listing page and campaign export only.
-			if ('campaign' === filter_input(INPUT_GET, 'post_type', FILTER_SANITIZE_STRING) || 'export_data' === filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING)) {
+			if (
+				\filter_input(INPUT_GET, 'post_type', FILTER_SANITIZE_STRING) === 'campaign'
+				|| filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING) === 'export_data'
+			) {
 				$this->default_services[] = CampaignExporter::class;
 			}
 
@@ -115,40 +142,31 @@ final class Loader
 		}
 
 		// Run Activator after theme switched to planet4-master-theme or a planet4 child theme.
-		if (get_option('theme_switched')) {
+		if (\get_option('theme_switched')) {
 			$this->default_services[] = Activator::class;
 		}
 
-		if (wp_is_json_request()) {
+		if (\wp_is_json_request()) {
 			$this->default_services[] = MetaboxRegister::class;
 		}
 
-		$services = array_merge($services, $this->default_services);
-		if ($services) {
-			foreach ($services as $service) {
-				$this->services[ $service ] = new $service();
-			}
-		}
-	}
+		$services = \array_merge($services, $this->default_services);
 
-	/**
-	 * Gets the loaded services.
-	 *
-	 * @return array The loaded services.
-	 */
-	public function get_services(): array
-	{
-		return $this->services;
+		if (!$services) {
+			return;
+		}
+
+		foreach ($services as $service) {
+			$this->services[ $service ] = new $service;
+		}
 	}
 
 	/**
 	 * Add some filters.
-	 *
-	 * @return void
 	 */
 	private function add_filters(): void
 	{
-		add_filter('pre_delete_post', [ $this, 'do_not_delete_autosave' ], 1, 3);
+		\add_filter('pre_delete_post', [$this, 'do_not_delete_autosave'], 1, 3);
 	}
 
 	/**
@@ -159,20 +177,20 @@ final class Loader
 	 * inserting it again, each time burning through another id of the posts table.
 	 *
 	 * @see https://core.trac.wordpress.org/ticket/49532
-	 *
 	 * @param null $delete Whether to go forward with the delete (sic, see original filter where it is null initally, not used here).
 	 * @param null $post Post object.
 	 * @param null $force_delete Is true when post is not trashed but deleted permanently (always false for revisions but they are deleted anyway).
-	 *
 	 * @return bool|null If the filter returns anything else than null the post is not deleted.
 	 */
 	public function do_not_delete_autosave($delete = null, $post = null, $force_delete = null): ?bool
 	{
 		if (
 			$force_delete
-			|| ( isset($_GET['action']) && 'delete' === $_GET['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			|| ( isset($_GET['delete_all']) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			|| ! preg_match('/autosave-v\d+$/', $post->post_name)
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			|| ( isset($_GET['action']) && 'delete' === $_GET['action'] )
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			|| ( isset($_GET['delete_all']) )
+			|| ! \preg_match('/autosave-v\d+$/', $post->post_name)
 		) {
 			return null;
 		}
@@ -186,7 +204,7 @@ final class Loader
 	 */
 	public static function theme_file_ver(string $rel_path): int
 	{
-		$filepath = trailingslashit(get_template_directory()) . $rel_path;
+		$filepath = \trailingslashit(\get_template_directory()) . $rel_path;
 
 		return self::get_timestamp($filepath);
 	}
@@ -195,13 +213,12 @@ final class Loader
 	 * Get timestamp of a file.
 	 *
 	 * @param string $path The path of the file.
-	 *
-	 * @throws RuntimeException If the file doesn't exist, or filectime fails in some other way.
+	 * @throws \RuntimeException If the file doesn't exist, or filectime fails in some other way.
 	 * @return int Timestamp of last file change.
 	 */
 	private static function get_timestamp(string $path): int
 	{
-		$ctime = filectime($path);
+		$ctime = \filectime($path);
 
 		if (! $ctime) {
 			throw new RuntimeException("Tried to get file change time of {$path} but failed to.");
@@ -218,17 +235,17 @@ final class Loader
 	public static function enqueue_versioned_style(string $relative_path): void
 	{
 		// Create a supposedly unique handle based on the path.
-		$handle = str_replace('/[^\w]/', '', $relative_path);
+		$handle = \str_replace('/[^\w]/', '', $relative_path);
 
-		$relative_path = '/' . ltrim($relative_path, '/');
+		$relative_path = '/' . \ltrim($relative_path, '/');
 
 		$version = self::get_timestamp(get_template_directory() . $relative_path);
 
-		wp_enqueue_style(
+		\wp_enqueue_style(
 			$handle,
-			get_template_directory_uri() . $relative_path,
+			\get_template_directory_uri() . $relative_path,
 			[],
-			$version
+			$version,
 		);
 	}
 
@@ -239,8 +256,11 @@ final class Loader
 	 * @param array  $deps Dependencies of the script.
 	 * @param bool   $in_footer Whether the script should be loaded in the footer.
 	 */
-	public static function enqueue_versioned_script(string $relative_path, array $deps = [], $in_footer = false): void
-	{
+	public static function enqueue_versioned_script(
+		string $relative_path,
+		array $deps = [],
+		bool $in_footer = false
+	): void {
 		// Create a supposedly unique handle based on the path.
 		$handle = str_replace('/[^\w]/', '', $relative_path);
 
@@ -248,12 +268,13 @@ final class Loader
 
 		$version = self::get_timestamp(get_template_directory() . $relative_path);
 
-		wp_enqueue_script(
+		\wp_enqueue_script(
 			$handle,
 			get_template_directory_uri() . $relative_path,
 			$deps,
 			$version,
-			$in_footer
+			$in_footer,
 		);
 	}
+
 }

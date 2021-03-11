@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * The template for displaying Archive pages.
@@ -10,16 +13,17 @@
  *
  * Methods for TimberHelper can be found in the /lib sub-directory
  *
- * @package  WordPress
- * @subpackage  Timber
- * @since   Timber 0.2
+ * @package WordPress
+ * @subpackage Timber
+ * @since Timber 0.2
  */
 
-$templates = [ 'archive.twig', 'index.twig' ];
+$templates = ['archive.twig', 'index.twig'];
 
 $context = Timber::get_context();
 
 $context['title'] = 'Archive';
+
 if (is_day()) {
 	$context['title'] = 'Archive: ' . get_the_date('D M Y');
 } elseif (is_month()) {

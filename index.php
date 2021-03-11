@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * The main template file
@@ -9,16 +12,18 @@
  *
  * Methods for TimberHelper can be found in the /lib sub-directory
  *
- * @package  WordPress
- * @subpackage  Timber
- * @since   Timber 0.1
+ * @package WordPress
+ * @subpackage Timber
+ * @since Timber 0.1
  */
 
-$context          = Timber::get_context();
+$context = Timber::get_context();
 $context['posts'] = Timber::get_posts();
 
-$templates = [ 'index.twig' ];
+$templates = ['index.twig'];
+
 if (is_home()) {
 	array_unshift($templates, 'home.twig');
 }
+
 Timber::render($templates, $context);

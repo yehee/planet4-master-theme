@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * Template Name: Evergreen Page
@@ -13,17 +16,18 @@
  *
  * Methods for TimberHelper can be found in the /lib sub-directory
  *
- * @package  WordPress
- * @subpackage  Timber
- * @since    Timber 0.1
+ * @package WordPress
+ * @subpackage Timber
+ * @since Timber 0.1
  */
 
 use P4\MasterTheme\Context;
 use P4\MasterTheme\Post;
 use Timber\Timber;
 
-$context        = Timber::get_context();
-$post           = new Post(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+$context = Timber::get_context();
+// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+$post = new Post();
 $page_meta_data = get_post_meta($post->ID);
 $page_meta_data = array_map('reset', $page_meta_data);
 
@@ -32,7 +36,7 @@ $post->set_issues_links();
 
 // Get Navigation Campaigns links.
 $page_tags = wp_get_post_tags($post->ID);
-$tags      = [];
+$tags = [];
 
 if (is_array($page_tags) && $page_tags) {
 	foreach ($page_tags as $page_tag) {
@@ -41,13 +45,14 @@ if (is_array($page_tags) && $page_tags) {
 			'link' => get_tag_link($page_tag),
 		];
 	}
+
 	$context['campaigns'] = $tags;
 }
 
-$context['post']                = $post;
+$context['post'] = $post;
 $context['custom_body_classes'] = 'white-bg';
-$context['page_category']       = 'Evergreen Page';
-$context['social_accounts']     = $post->get_social_accounts($context['footer_social_menu']);
+$context['page_category'] = 'Evergreen Page';
+$context['social_accounts'] = $post->get_social_accounts($context['footer_social_menu']);
 
 Context::set_header($context, $page_meta_data, $post->title);
 Context::set_background_image($context);
@@ -58,5 +63,5 @@ if (post_password_required($post->ID)) {
 
 	Timber::render('single-page.twig', $context);
 } else {
-	Timber::render([ 'evergreen.twig' ], $context);
+	Timber::render(['evergreen.twig'], $context);
 }

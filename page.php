@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * The template for displaying all pages.
@@ -17,23 +20,24 @@
  *
  * Methods for TimberHelper can be found in the /lib sub-directory
  *
- * @package  WordPress
- * @subpackage  Timber
- * @since    Timber 0.1
+ * @package WordPress
+ * @subpackage Timber
+ * @since Timber 0.1
  */
 
 /**
  * Category : Issue
- * Tag      : Campaign
- * Post     : Action
+ * Tag : Campaign
+ * Post : Action
  */
 
 use P4\MasterTheme\Context;
 use P4\MasterTheme\Post;
 use Timber\Timber;
 
-$context        = Timber::get_context();
-$post           = new Post(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+$context = Timber::get_context();
+// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+$post = new Post();
 $page_meta_data = get_post_meta($post->ID);
 $page_meta_data = array_map('reset', $page_meta_data);
 
@@ -42,7 +46,7 @@ $post->set_issues_links();
 
 // Get Navigation Campaigns links.
 $page_tags = wp_get_post_tags($post->ID);
-$tags      = [];
+$tags = [];
 
 if (is_array($page_tags) && $page_tags) {
 	foreach ($page_tags as $page_tag) {
@@ -51,6 +55,7 @@ if (is_array($page_tags) && $page_tags) {
 			'link' => get_tag_link($page_tag),
 		];
 	}
+
 	$context['campaigns'] = $tags;
 }
 
@@ -63,10 +68,10 @@ Context::set_background_image($context);
 Context::set_og_meta_fields($context, $post);
 Context::set_campaign_datalayer($context, $page_meta_data);
 
-$context['post']                = $post;
-$context['social_accounts']     = $post->get_social_accounts($context['footer_social_menu']);
-$context['page_category']       = $data_layer['page_category'];
-$context['post_tags']           = implode(', ', $post->tags());
+$context['post'] = $post;
+$context['social_accounts'] = $post->get_social_accounts($context['footer_social_menu']);
+$context['page_category'] = $data_layer['page_category'];
+$context['post_tags'] = implode(', ', $post->tags());
 $context['custom_body_classes'] = 'brown-bg ';
 
 if (post_password_required($post->ID)) {
@@ -80,5 +85,5 @@ if (post_password_required($post->ID)) {
 
 	Timber::render('single-page.twig', $context);
 } else {
-	Timber::render([ 'page-' . $post->post_name . '.twig', 'page.twig' ], $context);
+	Timber::render(['page-' . $post->post_name . '.twig', 'page.twig'], $context);
 }

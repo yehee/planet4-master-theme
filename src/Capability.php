@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 namespace P4\MasterTheme;
 
@@ -7,5 +10,6 @@ namespace P4\MasterTheme;
  */
 class Capability
 {
+
 	public const USE_IMAGE_ARCHIVE_PICKER = 'use_image_archive_picker';
 }

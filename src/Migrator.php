@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 namespace P4\MasterTheme;
 
@@ -20,9 +23,7 @@ class Migrator
 		// Fetch migration script ids that have run from WP option.
 		$log = MigrationLog::from_wp_options();
 
-		/**
-		 * @var MigrationScript[] $scripts
-		 */
+		/** @var array<\P4\MasterTheme\MigrationScript> $scripts */
 		$scripts = [
 			M001EnableEnFormFeature::class,
 			M002EnableLazyYoutube::class,

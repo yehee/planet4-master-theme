@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * MasterThemeTest Class
@@ -24,7 +27,7 @@ class P4MasterThemeTest extends P4_TestCase
 	/**
 	 * Tear down
 	 */
-	public function tearDown()
+	public function tearDown(): void
 	{
 		switch_theme('planet4-master-theme');
 	}
@@ -32,7 +35,7 @@ class P4MasterThemeTest extends P4_TestCase
 	/**
 	 * Test functions
 	 */
-	public function testFunctionsPHP()
+	public function testFunctionsPHP(): void
 	{
 		$context = Timber::get_context();
 		$this->assertEquals(MasterSite::class, get_class($context['site']));
@@ -43,7 +46,7 @@ class P4MasterThemeTest extends P4_TestCase
 	/**
 	 * Test loading
 	 */
-	public function testLoading()
+	public function testLoading(): void
 	{
 		$str = Timber::compile('tease.twig');
 		$this->assertStringStartsWith('<article class="tease tease-" id="tease-">', $str);

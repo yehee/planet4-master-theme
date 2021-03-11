@@ -1,4 +1,7 @@
-<?php
+<?php 
+
+
+declare(strict_types=1);
 
 /**
  * Test p4_page_type custom taxonomy.
@@ -6,7 +9,6 @@
  * @package P4MT
  */
 
-use P4\MasterTheme\CustomTaxonomy;
 
 /**
  * Class CustomTaxonomyTest
@@ -19,7 +21,7 @@ class CustomTaxonomyTest extends P4_TestCase
 	 *
 	 * @covers P4\MasterTheme\CustomTaxonomy::save_taxonomy_page_type
 	 */
-	public function test_post_has_a_taxonomy_term_assigned()
+	public function test_post_has_a_taxonomy_term_assigned(): void
 	{
 
 		// Get editor user.
@@ -29,11 +31,11 @@ class CustomTaxonomyTest extends P4_TestCase
 		// Create a sample post without assigning a p4-page-type story term to it.
 		$post_id = $this->factory->post->create(
 			[
-				'post_type'    => 'post',
-				'post_title'   => 'The name of the place is Babylon',
-				'post_name'    => 'test-taxonomy-url',
+				'post_type' => 'post',
+				'post_title' => 'The name of the place is Babylon',
+				'post_name' => 'test-taxonomy-url',
 				'post_content' => 'test content',
-			]
+			],
 		);
 
 		$terms = wp_get_object_terms($post_id, 'p4-page-type');
@@ -48,7 +50,7 @@ class CustomTaxonomyTest extends P4_TestCase
 	 *
 	 * @covers P4\MasterTheme\CustomTaxonomy::save_taxonomy_page_type
 	 */
-	public function test_post_has_a_single_taxonomy_term_assigned()
+	public function test_post_has_a_single_taxonomy_term_assigned(): void
 	{
 
 		// Get editor user.
@@ -58,14 +60,14 @@ class CustomTaxonomyTest extends P4_TestCase
 		// Create a sample post and assing p4-page-type story term to it.
 		$post_id = $this->factory->post->create(
 			[
-				'post_type'    => 'post',
-				'post_title'   => 'The name of the place is Babylon.',
-				'post_name'    => 'test-taxonomy-url',
+				'post_type' => 'post',
+				'post_title' => 'The name of the place is Babylon.',
+				'post_name' => 'test-taxonomy-url',
 				'post_content' => 'test content',
-				'tax_input'    => [
+				'tax_input' => [
 					'p4-page-type' => [ 'story', 'publication' ],
 				],
-			]
+			],
 		);
 
 		$terms = wp_get_object_terms($post_id, 'p4-page-type');

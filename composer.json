@@ -44,6 +44,7 @@
     "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
     "stevegrunwell/phpunit-markup-assertions": "^1.2",
     "phpunit/phpunit": "^6.2",
+    "slevomat/coding-standard": "^6.4",
     "wpackagist-plugin/timber-library": "1.18.*"
   },
   "scripts": {
