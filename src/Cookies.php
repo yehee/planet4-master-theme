@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -22,9 +24,8 @@ class Cookies
 	 *
 	 * @since 1.9
 	 *
-	 * @return bool
 	 */
-	public function filter_google_login_set_login_cookie($dosetcookie)
+	public function filter_google_login_set_login_cookie(bool $dosetcookie): bool
 	{
 		global $pagenow;
 

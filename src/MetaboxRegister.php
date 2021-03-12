@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use CMB2_Field;
@@ -10,7 +12,6 @@ use WP_REST_Server;
  */
 class MetaboxRegister
 {
-
 	/**
 	 * The maximum number of take action pages to show in dropdown.
 	 *
@@ -27,17 +28,9 @@ class MetaboxRegister
 	}
 
 	/**
-	 * Class hooks.
-	 */
-	private function hooks()
-	{
-		add_action('cmb2_init', [ $this, 'register_p4_meta_box' ]);
-	}
-
-	/**
 	 * Register P4 meta box.
 	 */
-	public function register_p4_meta_box()
+	public function register_p4_meta_box(): void
 	{
 		$this->register_meta_box_header();
 		$this->register_meta_box_post();
@@ -48,7 +41,7 @@ class MetaboxRegister
 	/**
 	 * Register Page Header meta box.
 	 */
-	public function register_meta_box_header()
+	public function register_meta_box_header(): void
 	{
 
 		$p4_header = new_cmb2_box(
@@ -157,7 +150,7 @@ class MetaboxRegister
 	/**
 	 * Register Post meta box.
 	 */
-	public function register_meta_box_post()
+	public function register_meta_box_post(): void
 	{
 
 		$p4_post = new_cmb2_box(
@@ -220,7 +213,7 @@ class MetaboxRegister
 	/**
 	 * Register Open Graph meta box.
 	 */
-	public function register_meta_box_open_graph()
+	public function register_meta_box_open_graph(): void
 	{
 
 		$p4_open_graph = new_cmb2_box(
@@ -273,7 +266,7 @@ class MetaboxRegister
 	/**
 	 * Register Campaign Information meta box.
 	 */
-	public function register_meta_box_campaign()
+	public function register_meta_box_campaign(): void
 	{
 		$post_types       = [ 'page', 'campaign', 'post' ];
 		$analytics_values = AnalyticsValues::from_cache_or_api_or_hardcoded();
@@ -353,7 +346,7 @@ class MetaboxRegister
 	 *
 	 * @return array
 	 */
-	public function populate_act_page_children_options()
+	public function populate_act_page_children_options(): array
 	{
 		$parent_act_id = planet4_get_option('act_page');
 		$options       = [];
@@ -381,9 +374,8 @@ class MetaboxRegister
 	/**
 	 * Checks if current post is not of campaign post type.
 	 *
-	 * @return bool
 	 */
-	public function is_not_campaign_post()
+	public function is_not_campaign_post(): bool
 	{
 		return PostCampaign::POST_TYPE !== get_post_type();
 	}
@@ -395,7 +387,7 @@ class MetaboxRegister
 	 * @param string     $action The action being performed on the field.
 	 * @param CMB2_Field $field The field being updated.
 	 */
-	public static function save_global_project_id($updated, $action, CMB2_Field $field)
+	public static function save_global_project_id(bool $updated, string $action, CMB2_Field $field): void
 	{
 		if (! $updated) {
 			return;
@@ -411,6 +403,14 @@ class MetaboxRegister
 	}
 
 	/**
+	 * Class hooks.
+	 */
+	private function hooks(): void
+	{
+		add_action('cmb2_init', [ $this, 'register_p4_meta_box' ]);
+	}
+
+	/**
 	 * If the post has a value that is not in the sheet, keep it in the dropdown so that metaboxes save doesn't set
 	 * it to another value, but mark it with `[DEPRECATED]` prefix.
 	 *
@@ -418,7 +418,7 @@ class MetaboxRegister
 	 * @param string $field_name The meta field name.
 	 * @return array The list with maybe the current post value.
 	 */
-	private static function maybe_add_current_post_value(array $options_array, $field_name): array
+	private static function maybe_add_current_post_value(array $options_array, string $field_name): array
 	{
 		// Not pretty but will work for now.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
@@ -431,10 +431,10 @@ class MetaboxRegister
 
 		if (
 			isset($current_post_meta_value[0])
-			&& ! ( array_key_exists(
+			&& ! array_key_exists(
 				$current_post_meta_value[0],
 				$options_array
-			) )
+			)
 		) {
 			$options_array = [ $current_post_meta_value[0] => __('[DEPRECATED] ', 'planet4-master-theme-backend') . $current_post_meta_value[0] ] + $options_array;
 		}

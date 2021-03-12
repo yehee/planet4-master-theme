@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\ImageArchive;
 
 /**
@@ -21,44 +23,6 @@ class ImageSize implements \JsonSerializable
 	 * @var int The heigth in pixels.
 	 */
 	private $height;
-
-	/**
-	 * Extract all available sizes from the media API data for an image.
-	 *
-	 * @param array $data The data of an image.
-	 *
-	 * @return self[] All available sizes from the data.
-	 */
-	public static function all_from_api_response($data): array
-	{
-		$keys = [
-			'Path_TR7',
-			'Path_TR1_COMP_SMALL',
-			'Path_TR1',
-			'Path_TR4',
-			'Path_TR1_COMP',
-			'Path_TR2',
-			'Path_TR3',
-		];
-
-		return array_reduce(
-			$keys,
-			static function ($carry, $key) use ($data) {
-				if (! empty($data[ $key ]['URI'])) {
-					$size = new self();
-
-					$size->url    = $data[ $key ]['URI'];
-					$size->width  = (int) $data[ $key ]['Width'];
-					$size->height = (int) $data[ $key ]['Height'];
-
-					$carry[] = $size;
-				}
-
-				return $carry;
-			},
-			[]
-		);
-	}
 
 	/**
 	 * @inheritDoc
@@ -89,8 +53,46 @@ class ImageSize implements \JsonSerializable
 	 *
 	 * @return int The width.
 	 */
-	public function get_width()
+	public function get_width(): int
 	{
 		return $this->width;
+	}
+
+	/**
+	 * Extract all available sizes from the media API data for an image.
+	 *
+	 * @param array $data The data of an image.
+	 *
+	 * @return array<self> All available sizes from the data.
+	 */
+	public static function all_from_api_response(array $data): array
+	{
+		$keys = [
+			'Path_TR7',
+			'Path_TR1_COMP_SMALL',
+			'Path_TR1',
+			'Path_TR4',
+			'Path_TR1_COMP',
+			'Path_TR2',
+			'Path_TR3',
+		];
+
+		return array_reduce(
+			$keys,
+			static function ($carry, $key) use ($data) {
+				if (! empty($data[ $key ]['URI'])) {
+					$size = new self();
+
+					$size->url    = $data[ $key ]['URI'];
+					$size->width  = (int) $data[ $key ]['Width'];
+					$size->height = (int) $data[ $key ]['Height'];
+
+					$carry[] = $size;
+				}
+
+				return $carry;
+			},
+			[]
+		);
 	}
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use Timber;
@@ -11,7 +13,6 @@ use Timber;
  */
 class User extends Timber\User
 {
-
 	/**
 	 * Is a fake user flag
 	 *
@@ -25,7 +26,7 @@ class User extends Timber\User
 	 * @param object|int|bool $uid The User id.
 	 * @param string          $author_override The author override display name.
 	 */
-	public function __construct($uid = false, $author_override = '')
+	public function __construct($uid = false, string $author_override = '')
 	{
 		if (! $author_override) {
 			parent::__construct($uid);
@@ -38,56 +39,52 @@ class User extends Timber\User
 	/**
 	 * The User profile page url.
 	 *
-	 * @return string
 	 */
 	public function link(): string
 	{
 		if ($this->is_fake) {
 			return '#';
-		} else {
-			return parent::link();
 		}
+
+		return parent::link();
 	}
 
 	/**
 	 * The relative path of the User profile page.
 	 *
-	 * @return string
 	 */
 	public function path(): string
 	{
 		if ($this->is_fake) {
 			return '#';
-		} else {
-			return parent::path();
 		}
+
+		return parent::path();
 	}
 
 	/**
 	 * Author display name.
 	 *
-	 * @return string
 	 */
 	public function name(): ?string
 	{
 		if ($this->is_fake) {
 			return (string) $this->display_name;
-		} else {
-			return parent::name();
 		}
+
+		return parent::name();
 	}
 
 	/**
 	 * Stringifies the User object.
 	 *
-	 * @return null|string
 	 */
-	public function __toString()
+	public function __toString(): ?string
 	{
 		if ($this->is_fake) {
 			return $this->name();
-		} else {
-			return parent::__toString();
 		}
+
+		return parent::__toString();
 	}
 }

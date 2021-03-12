@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\ImageArchive;
 
 use JsonSerializable;
@@ -68,7 +70,7 @@ class Image implements JsonSerializable
 	private $original_language_description;
 
 	/**
-	 * @var ImageSize[] Different available sizes for this image.
+	 * @var array<ImageSize> Different available sizes for this image.
 	 */
 	private $sizes = [];
 
@@ -106,34 +108,17 @@ class Image implements JsonSerializable
 
 		$largest_size = 0;
 		foreach ($image->sizes as $size) {
-			if ($size->get_width() > $largest_size) {
-				$largest_size    = $size->get_width();
-				$image->original = $size;
+			if ($size->get_width() <= $largest_size) {
+				continue;
 			}
+
+			$largest_size    = $size->get_width();
+			$image->original = $size;
 		}
 
 		$image->wordpress_id = $images_in_wordpress[ $image->archive_id ] ?? null;
 
 		return $image;
-	}
-
-	/**
-	 * Extract all images from the API response.
-	 *
-	 * @param array $response API response with multiple images.
-	 * @param array $images_in_wordpress An array which contains all WordPress IDs corresponding to images in the data.
-	 *
-	 * @return Image[] Representation of images extracted from the data.
-	 */
-	public static function all_from_api_response(array $response, array $images_in_wordpress): array
-	{
-
-		return array_map(
-			static function ($item) use ($images_in_wordpress) {
-				return Image::from_api_response($item, $images_in_wordpress);
-			},
-			$response['APIResponse']['Items'] ?? []
-		);
 	}
 
 	/**
@@ -243,5 +228,24 @@ class Image implements JsonSerializable
 		update_post_meta($attachment_id, self::ARCHIVE_ID_META_KEY, $this->archive_id);
 
 		$this->wordpress_id = $attachment_id;
+	}
+
+	/**
+	 * Extract all images from the API response.
+	 *
+	 * @param array $response API response with multiple images.
+	 * @param array $images_in_wordpress An array which contains all WordPress IDs corresponding to images in the data.
+	 *
+	 * @return array<Image> Representation of images extracted from the data.
+	 */
+	public static function all_from_api_response(array $response, array $images_in_wordpress): array
+	{
+
+		return array_map(
+			static function ($item) use ($images_in_wordpress) {
+				return Image::from_api_response($item, $images_in_wordpress);
+			},
+			$response['APIResponse']['Items'] ?? []
+		);
 	}
 }

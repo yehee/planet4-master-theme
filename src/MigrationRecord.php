@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use DateTime;
@@ -30,7 +32,7 @@ final class MigrationRecord
 	private $success;
 
 	/**
-	 * @var string[] Log messages which can be added by the running script.
+	 * @var array<string> Log messages which can be added by the running script.
 	 */
 	private $logs = [];
 

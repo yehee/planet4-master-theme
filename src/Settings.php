@@ -1,33 +1,24 @@
 <?php
 
-namespace P4\MasterTheme;
+declare(strict_types=1);
 
-use CMB2_Field;
+namespace P4\MasterTheme;
 
 /**
  * Class P4\MasterTheme\Settings
  */
 class Settings
 {
+	/**
+	 * Option key
+	 *
+	 */
+	public const KEY = 'planet4_options';
 
 	/**
 	 * ID of the Metabox
 	 */
 	private const METABOX_ID = 'option_metabox';
-
-	/**
-	 * Option key
-	 *
-	 * @var string
-	 */
-	public const KEY = 'planet4_options';
-
-	/**
-	 * Option page slug
-	 *
-	 * @var string
-	 */
-	private $slug = 'planet4_settings_navigation';
 
 	/**
 	 * Options Page title
@@ -50,6 +41,13 @@ class Settings
 	 * Includes arrays with the title and fields of each subpage
 	 */
 	protected $subpages = [];
+
+	/**
+	 * Option page slug
+	 *
+	 * @var string
+	 */
+	private $slug = 'planet4_settings_navigation';
 
 	/**
 	 * Constructor
@@ -372,7 +370,7 @@ class Settings
 	/**
 	 * Initiate our hooks
 	 */
-	public function hooks()
+	public function hooks(): void
 	{
 		add_action('admin_init', [ $this, 'init' ]);
 		add_action('admin_menu', [ $this, 'add_options_pages' ]);
@@ -383,15 +381,17 @@ class Settings
 		add_filter('cmb2_render_pagetype_select_taxonomy', [ $this, 'p4_render_pagetype_dropdown' ], 10, 2);
 
 		// Make settings multilingual if wpml plugin is installed and activated.
-		if (function_exists('icl_object_id')) {
-			add_action('init', [ $this, 'make_settings_multilingual' ]);
+		if (!function_exists('icl_object_id')) {
+			return;
 		}
+
+		add_action('init', [ $this, 'make_settings_multilingual' ]);
 	}
 
 	/**
 	 * Register our setting to WP.
 	 */
-	public function init()
+	public function init(): void
 	{
 		register_setting(self::KEY, self::KEY);
 	}
@@ -399,9 +399,9 @@ class Settings
 	/**
 	 * Add menu options page.
 	 */
-	public function add_options_pages()
+	public function add_options_pages(): void
 	{
-		$this->options_page = add_menu_page($this->title, $this->title, 'manage_options', $this->slug, function () {
+		$this->options_page = add_menu_page($this->title, $this->title, 'manage_options', $this->slug, function (): void {
 		}, 'dashicons-admin-site-alt');
 		foreach ($this->subpages as $path => $subpage) {
 			add_submenu_page(
@@ -410,13 +410,12 @@ class Settings
 				$subpage['title'],
 				'manage_options',
 				$path,
-				function () use ($path) {
+				function () use ($path): void {
 					$this->admin_page_display($path);
 				}
 			);
 		}
 	}
-
 
 	/**
 	 * Display notifications of success and error
@@ -439,7 +438,7 @@ class Settings
 	 * @param array  $field_args Field arguments.
 	 * @param string $value Value.
 	 */
-	public function p4_render_act_page_dropdown($field_args, $value)
+	public function p4_render_act_page_dropdown(array $field_args, string $value): void
 	{
 		wp_dropdown_pages(
 			[
@@ -458,7 +457,7 @@ class Settings
 	 * @param array  $field_args Field arguments.
 	 * @param string $value Value.
 	 */
-	public function p4_render_explore_page_dropdown($field_args, $value)
+	public function p4_render_explore_page_dropdown(array $field_args, string $value): void
 	{
 		wp_dropdown_pages(
 			[
@@ -477,7 +476,7 @@ class Settings
 	 * @param array  $field_args Field arguments.
 	 * @param string $value Value.
 	 */
-	public function p4_render_category_dropdown($field_args, $value)
+	public function p4_render_category_dropdown(array $field_args, string $value): void
 	{
 
 		wp_dropdown_categories(
@@ -498,7 +497,7 @@ class Settings
 	 * @param CMB2_Field $field_args CMB2 field Object.
 	 * @param int        $value Pagetype taxonomy ID.
 	 */
-	public function p4_render_pagetype_dropdown($field_args, $value)
+	public function p4_render_pagetype_dropdown(CMB2_Field $field_args, int $value): void
 	{
 
 		wp_dropdown_categories(
@@ -518,7 +517,7 @@ class Settings
 	 *
 	 * @param string $plugin_page The key for the current page.
 	 */
-	public function admin_page_display(string $plugin_page)
+	public function admin_page_display(string $plugin_page): void
 	{
 		$fields = $this->subpages[ $plugin_page ]['fields'];
 
@@ -541,7 +540,7 @@ class Settings
 	 *
 	 * @return array
 	 */
-	public function option_metabox($fields)
+	public function option_metabox(array $fields): array
 	{
 		return [
 			'id'         => self::METABOX_ID,
@@ -560,7 +559,7 @@ class Settings
 	 * Hook for wpml plugin.
 	 * Enables the possibility to save a different value per language for the theme options using WPML language switcher.
 	 */
-	public function make_settings_multilingual()
+	public function make_settings_multilingual(): void
 	{
 		do_action('wpml_multilingual_options', 'planet4_options');
 	}

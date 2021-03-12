@@ -1,17 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
-use WP_Error;
 use WP_Post;
-use WP_Term;
 
 /**
  * Class CustomTaxonomy
  */
 class CustomTaxonomy
 {
-
 	const TAXONOMY           = 'p4-page-type';
 	const TAXONOMY_PARAMETER = 'p4_page_type';
 	const TAXONOMY_SLUG      = 'page-type';
@@ -25,30 +24,6 @@ class CustomTaxonomy
 	}
 
 	/**
-	 * Register actions for WordPress hooks and filters.
-	 */
-	private function hooks()
-	{
-		add_action('init', [ $this, 'register_taxonomy' ], 2);
-		add_action('created_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
-		add_action('edited_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
-		add_action('delete_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
-		add_action('save_post', [ $this, 'save_taxonomy_page_type' ], 10, 2);
-		add_filter('available_permalink_structure_tags', [ $this, 'add_taxonomy_as_permalink_structure' ], 10, 1);
-
-		// Rewrites the permalink to a post belonging to this taxonomy.
-		add_filter('post_link', [ $this, 'filter_permalink' ], 10, 3);
-
-		// Rewrites the permalink to this taxonomy's page.
-		add_filter('term_link', [ $this, 'filter_term_permalink' ], 10, 3);
-		add_filter('post_rewrite_rules', [ $this, 'replace_taxonomy_terms_in_rewrite_rules' ], 10, 1);
-		add_filter('root_rewrite_rules', [ $this, 'add_terms_rewrite_rules' ], 10, 1);
-
-		// Provides a filter element for the taxonomy in the posts list.
-		add_action('restrict_manage_posts', [ $this, 'filter_posts_by_page_type' ], 10, 2);
-	}
-
-	/**
 	 * Add p4_page_type structure in available permalink tags for Settings -> Permalinks page.
 	 * available_permalink_structure_tags filter.
 	 *
@@ -56,7 +31,7 @@ class CustomTaxonomy
 	 *
 	 * @return mixed
 	 */
-	public function add_taxonomy_as_permalink_structure($tags)
+	public function add_taxonomy_as_permalink_structure(array $tags)
 	{
 		$tags[ self::TAXONOMY_PARAMETER ] = __('P4 page type (A p4 page type term.)', 'planet4-master-theme-backend');
 
@@ -68,10 +43,10 @@ class CustomTaxonomy
 	 *
 	 * @param WP_Post $post The WordPress that will be filtered/edited.
 	 */
-	public function create_taxonomy_metabox_markup(WP_Post $post)
+	public function create_taxonomy_metabox_markup(WP_Post $post): void
 	{
 		$attached_type = get_the_terms($post, self::TAXONOMY);
-		$current_type  = ( is_array($attached_type) ) ? $attached_type[0]->term_id : - 1;
+		$current_type  = is_array($attached_type) ? $attached_type[0]->term_id : - 1;
 		$all_types     = $this->get_terms();
 		if (-1 === $current_type) {
 			// Assign default p4-pagetype for new POST.
@@ -102,7 +77,7 @@ class CustomTaxonomy
 	 *
 	 * @return string   The filtered permalink.
 	 */
-	public function filter_permalink($permalink, $post, $leavename)
+	public function filter_permalink(string $permalink, WP_Post $post, bool $leavename): string
 	{
 
 		if (strpos($permalink, '%' . self::TAXONOMY_PARAMETER . '%') === false) {
@@ -160,9 +135,9 @@ class CustomTaxonomy
 	/**
 	 * Get all taxonomy's terms (for all languages available) if wpml is enabled.
 	 *
-	 * @return WP_Term[]
+	 * @return array<WP_Term>
 	 */
-	public function get_multilingual_terms()
+	public function get_multilingual_terms(): array
 	{
 
 		$all_terms           = [];
@@ -178,9 +153,11 @@ class CustomTaxonomy
 					'taxonomy'   => self::TAXONOMY,
 				]
 			);
-			if (! is_wp_error($terms) && ! empty($terms)) {
-				$all_terms = array_merge($all_terms, $terms);
+			if (is_wp_error($terms) || empty($terms)) {
+				continue;
 			}
+
+			$all_terms = array_merge($all_terms, $terms);
 		}
 
 		do_action('wpml_switch_language', $current_lang);
@@ -212,7 +189,7 @@ class CustomTaxonomy
 	/**
 	 * Register a custom taxonomy for planet4 post types.
 	 */
-	public function register_taxonomy()
+	public function register_taxonomy(): void
 	{
 
 		$p4_page_type = [
@@ -250,7 +227,7 @@ class CustomTaxonomy
 	/**
 	 * Add each taxonomy term as a rewrite rule.
 	 */
-	public function add_terms_as_rewrite_rules()
+	public function add_terms_as_rewrite_rules(): void
 	{
 		// Add a rewrite rule on top of the chain for each slug
 		// of this taxonomy type (e.g.: "publication", "story", etc.).
@@ -269,7 +246,7 @@ class CustomTaxonomy
 	 *
 	 * @return string The filtered permalink for this taxonomy.
 	 */
-	public function filter_term_permalink($link, $term, $taxonomy)
+	public function filter_term_permalink(string $link, string $term, string $taxonomy): string
 	{
 		if (self::TAXONOMY !== $taxonomy) {
 			return $link;
@@ -279,40 +256,13 @@ class CustomTaxonomy
 	}
 
 	/**
-	 * Get the slugs for all terms in this taxonomy.
-	 *
-	 * @return array Flat array containing the slug for every term.
-	 */
-	private function get_terms_slugs(): array
-	{
-		// Get planet4 page type taxonomy terms.
-		$terms = $this->get_all_terms();
-
-		if (! is_wp_error($terms)) {
-			$term_slugs = [];
-			if (! empty($terms)) {
-				foreach ($terms as $term) {
-					$term_slugs[] = $term->slug;
-				}
-			} elseif (empty($terms)) {
-				// Add story slug also if the taxonomy does not have any terms.
-				$term_slugs[] = 'story';
-			}
-
-			return $term_slugs;
-		}
-
-		return [];
-	}
-
-	/**
 	 * Filter for post_rewrite_rules.
 	 *
 	 * @param array $rules   Post rewrite rules passed by WordPress.
 	 *
 	 * @return array        The filtered post rewrite rules.
 	 */
-	public function replace_taxonomy_terms_in_rewrite_rules($rules)
+	public function replace_taxonomy_terms_in_rewrite_rules(array $rules): array
 	{
 		// Get planet4 page type taxonomy terms.
 		$term_slugs = $this->get_terms_slugs();
@@ -341,7 +291,7 @@ class CustomTaxonomy
 	 *
 	 * @return array        The filtered root rewrite rules.
 	 */
-	public function add_terms_rewrite_rules($rules)
+	public function add_terms_rewrite_rules(array $rules): array
 	{
 		// Add a rewrite rule for each slug of this taxonomy type (e.g.: "publication", "story", etc.)
 		// for p4 page type pages.
@@ -364,7 +314,7 @@ class CustomTaxonomy
 	 * @param int    $tt_id    Term taxonomy ID.
 	 * @param string $taxonomy Taxonomy slug.
 	 */
-	public function trigger_rewrite_rules($term_id, $tt_id, $taxonomy)
+	public function trigger_rewrite_rules(int $term_id, int $tt_id, string $taxonomy): void
 	{
 		if (self::TAXONOMY !== $taxonomy) {
 			return;
@@ -380,7 +330,7 @@ class CustomTaxonomy
 	 * @param int     $post_id Id of the saved post.
 	 * @param WP_Post $post    Post object.
 	 */
-	public function save_taxonomy_page_type($post_id, $post)
+	public function save_taxonomy_page_type(int $post_id, WP_Post $post): void
 	{
 
 		// Ignore autosave.
@@ -395,13 +345,13 @@ class CustomTaxonomy
 
 		// Allow p4-page-type to be set from edit post and quick edit pages.
 		// Make sure there's input.
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+        // phpcs:disable WordPress.Security.NonceVerification.Missing
 		if (
 			isset($_POST[ self::TAXONOMY ]) && 'post' === $post->post_type &&
 			filter_var(wp_unslash($_POST[ self::TAXONOMY ]), FILTER_VALIDATE_INT)
 		) {
 			$selected = get_term_by('id', intval($_POST[ self::TAXONOMY ]), self::TAXONOMY);
-			// phpcs:enable
+            // phpcs:enable
 			if (false !== $selected && ! is_wp_error($selected)) {
 				// Save post type.
 				wp_set_post_terms($post_id, [ $selected->term_id ], self::TAXONOMY);
@@ -410,21 +360,25 @@ class CustomTaxonomy
 
 		// Check if post type is POST.
 		// Check if post has a p4 page type term assigned to it and if none if assigned, assign the default p4 page type term.
-		if ('post' === $post->post_type) {
-			// Check if post has an assigned term to it.
-			$terms = wp_get_object_terms($post_id, self::TAXONOMY);
-			if (! is_wp_error($terms)) {
-				$default_p4_pagetype = $this->get_default_p4_pagetype();
+		if ('post' !== $post->post_type) {
+			return;
+		}
 
-				// Assign default p4-pagetype, if no term is assigned to post.
-				if (empty($terms)) {
-					if ($default_p4_pagetype instanceof \WP_Term) {
-						wp_set_post_terms($post_id, [ $default_p4_pagetype->term_id ], self::TAXONOMY);
-					}
-				} elseif (count($terms) > 1 && $terms[0] instanceof \WP_Term) { // Assign the first term, if more than one terms are assigned.
-					wp_set_post_terms($post_id, [ $terms[0]->term_id ], self::TAXONOMY);
-				}
+		// Check if post has an assigned term to it.
+		$terms = wp_get_object_terms($post_id, self::TAXONOMY);
+		if (is_wp_error($terms)) {
+			return;
+		}
+
+		$default_p4_pagetype = $this->get_default_p4_pagetype();
+
+		// Assign default p4-pagetype, if no term is assigned to post.
+		if (empty($terms)) {
+			if ($default_p4_pagetype instanceof \WP_Term) {
+				wp_set_post_terms($post_id, [ $default_p4_pagetype->term_id ], self::TAXONOMY);
 			}
+		} elseif (count($terms) > 1 && $terms[0] instanceof \WP_Term) { // Assign the first term, if more than one terms are assigned.
+			wp_set_post_terms($post_id, [ $terms[0]->term_id ], self::TAXONOMY);
 		}
 	}
 
@@ -435,7 +389,7 @@ class CustomTaxonomy
 	 * @param string $post_type WordPress post type slug.
 	 * @param string $which The location of the extra table nav markup ('top' or 'bottom').
 	 */
-	public function filter_posts_by_page_type($post_type, $which)
+	public function filter_posts_by_page_type(string $post_type, string $which): void
 	{
 		// Apply this only to a specific post type.
 		if ('post' !== $post_type) {
@@ -455,12 +409,63 @@ class CustomTaxonomy
 				printf(
 					'<option value="%1$s" %2$s>%3$s</option>',
 					esc_html($term->slug),
-					( ( isset($_GET[ self::TAXONOMY ]) && ( $_GET[ self::TAXONOMY ] === $term->slug ) ) ? ' selected="selected"' : '' ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					( isset($_GET[ self::TAXONOMY ]) && ( $_GET[ self::TAXONOMY ] === $term->slug ) ? ' selected="selected"' : '' ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					esc_html($term->name)
 				);
 			}
 			?>
 		</select>
 		<?php
+	}
+
+	/**
+	 * Register actions for WordPress hooks and filters.
+	 */
+	private function hooks(): void
+	{
+		add_action('init', [ $this, 'register_taxonomy' ], 2);
+		add_action('created_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
+		add_action('edited_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
+		add_action('delete_term', [ $this, 'trigger_rewrite_rules' ], 10, 3);
+		add_action('save_post', [ $this, 'save_taxonomy_page_type' ], 10, 2);
+		add_filter('available_permalink_structure_tags', [ $this, 'add_taxonomy_as_permalink_structure' ], 10, 1);
+
+		// Rewrites the permalink to a post belonging to this taxonomy.
+		add_filter('post_link', [ $this, 'filter_permalink' ], 10, 3);
+
+		// Rewrites the permalink to this taxonomy's page.
+		add_filter('term_link', [ $this, 'filter_term_permalink' ], 10, 3);
+		add_filter('post_rewrite_rules', [ $this, 'replace_taxonomy_terms_in_rewrite_rules' ], 10, 1);
+		add_filter('root_rewrite_rules', [ $this, 'add_terms_rewrite_rules' ], 10, 1);
+
+		// Provides a filter element for the taxonomy in the posts list.
+		add_action('restrict_manage_posts', [ $this, 'filter_posts_by_page_type' ], 10, 2);
+	}
+
+	/**
+	 * Get the slugs for all terms in this taxonomy.
+	 *
+	 * @return array Flat array containing the slug for every term.
+	 */
+	private function get_terms_slugs(): array
+	{
+		// Get planet4 page type taxonomy terms.
+		$terms = $this->get_all_terms();
+
+		if (! is_wp_error($terms)) {
+			$term_slugs = [];
+			if (! empty($terms)) {
+				foreach ($terms as $term) {
+					$term_slugs[] = $term->slug;
+				}
+			} elseif (empty($terms)) {
+				// Add story slug also if the taxonomy does not have any terms.
+				$term_slugs[] = 'story';
+			}
+
+			return $term_slugs;
+		}
+
+		return [];
 	}
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class Sitemap
 {
-
 	/**
 	 * Limit the number of evergreen pages
 	 */

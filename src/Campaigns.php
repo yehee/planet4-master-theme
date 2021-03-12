@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use WP_Term;
@@ -9,13 +11,6 @@ use WP_Term;
  */
 class Campaigns
 {
-
-	/**
-	 * Taxonomy
-	 *
-	 * @var string $taxonomy
-	 */
-	private $taxonomy = 'post_tag';
 	/**
 	 * Page Types
 	 *
@@ -28,6 +23,12 @@ class Campaigns
 	 * @var array $localizations
 	 */
 	public $localizations = [];
+	/**
+	 * Taxonomy
+	 *
+	 * @var string $taxonomy
+	 */
+	private $taxonomy = 'post_tag';
 
 	/**
 	 * Taxonomy_Image constructor.
@@ -41,27 +42,11 @@ class Campaigns
 	}
 
 	/**
-	 * Class hooks.
-	 */
-	private function hooks()
-	{
-		add_action('post_tag_add_form_fields', [ $this, 'add_taxonomy_form_fields' ]);
-		add_action('post_tag_edit_form_fields', [ $this, 'add_taxonomy_form_fields' ]);
-		add_action('create_post_tag', [ $this, 'save_taxonomy_meta' ]);
-		add_action('edit_post_tag', [ $this, 'save_taxonomy_meta' ]);
-		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ]);
-
-		add_filter('manage_edit-post_tag_columns', [ $this, 'edit_taxonomy_columns' ]);
-		add_filter('manage_post_tag_custom_column', [ $this, 'manage_taxonomy_custom_column' ], 10, 3);
-		add_filter('manage_edit-post_tag_sortable_columns', [ $this, 'manage_taxonomy_custom_sortable_column' ], 10, 3);
-	}
-
-	/**
 	 * Add custom field(s) to taxonomy form.
 	 *
 	 * @param WP_Term $wp_tag The object passed to the callback when on Edit Tag page.
 	 */
-	public function add_taxonomy_form_fields($wp_tag)
+	public function add_taxonomy_form_fields(WP_Term $wp_tag): void
 	{
 		$this->page_types = get_terms(
 			[
@@ -199,10 +184,10 @@ class Campaigns
 	 *
 	 * @param int $term_id The ID of the WP_Term object that is added or edited.
 	 */
-	public function save_taxonomy_meta($term_id)
+	public function save_taxonomy_meta(int $term_id): void
 	{
 		// Save the selected page types for this campaign.
-		$selected_page_types = $_POST['p4_page_type'] ?? []; // phpcs:ignore
+        $selected_page_types = $_POST['p4_page_type'] ?? []; // phpcs:ignore
 
 		if ($this->validate_page_types($selected_page_types)) {
 			update_term_meta($term_id, 'selected_page_types', $selected_page_types);
@@ -319,7 +304,7 @@ class Campaigns
 	 *
 	 * @return array Associative array with the columns of the taxonomy.
 	 */
-	public function edit_taxonomy_columns($columns): array
+	public function edit_taxonomy_columns(array $columns): array
 	{
 		$columns['image'] = __('Image', 'planet4-master-theme-backend');
 		return $columns;
@@ -334,7 +319,7 @@ class Campaigns
 	 *
 	 * @return string The new html to be applied to each row of the $column.
 	 */
-	public function manage_taxonomy_custom_column($output, $column, $term_id): string
+	public function manage_taxonomy_custom_column(string $output, string $column, int $term_id): string
 	{
 		if ('image' === $column) {
 			$attachment_id = get_term_meta($term_id, 'tag_attachment_id', true);
@@ -350,7 +335,7 @@ class Campaigns
 	 *
 	 * @return array Associative array with the columns of the taxonomy.
 	 */
-	public function manage_taxonomy_custom_sortable_column($columns): array
+	public function manage_taxonomy_custom_sortable_column(array $columns): array
 	{
 		$columns['image'] = 'image';
 		return $columns;
@@ -363,12 +348,9 @@ class Campaigns
 	 *
 	 * @return bool True if validation is ok, false if validation fails.
 	 */
-	public function validate($id): bool
+	public function validate(int $id): bool
 	{
-		if ($id < 0) {
-			return false;
-		}
-		return true;
+		return $id >= 0;
 	}
 
 	/**
@@ -378,7 +360,7 @@ class Campaigns
 	 *
 	 * @return bool True if validation is ok, false if validation fails.
 	 */
-	public function validate_page_types($selected_page_types): bool
+	public function validate_page_types(array $selected_page_types): bool
 	{
 		$page_types_slugs = [];
 		$this->page_types = get_terms(
@@ -391,9 +373,11 @@ class Campaigns
 
 		if ($this->page_types) {
 			foreach ($this->page_types as $page_type) {
-				if ($page_type instanceof WP_Term) {
-					$page_types_slugs[] = $page_type->slug;
+				if (!($page_type instanceof WP_Term)) {
+					continue;
 				}
+
+				$page_types_slugs[] = $page_type->slug;
 			}
 		}
 
@@ -408,22 +392,9 @@ class Campaigns
 	}
 
 	/**
-	 * Uses block's filtered/converted attributes and it's name to convert it to a gutenberg equivalent block.
-	 *
-	 * @param string $block_name Gutenberg block name.
-	 * @param array  $block_attributes block attribute array.
-	 *
-	 * @return string
-	 */
-	protected function make_gutenberg_comment($block_name, $block_attributes)
-	{
-		return '<!-- wp:' . $block_name . ' ' . wp_json_encode($block_attributes, JSON_UNESCAPED_SLASHES) . ' /-->';
-	}
-
-	/**
 	 * Load assets.
 	 */
-	public function enqueue_admin_assets()
+	public function enqueue_admin_assets(): void
 	{
 		if (! is_admin() || strpos(get_current_screen()->taxonomy, $this->taxonomy) === false) {
 			return;
@@ -438,5 +409,33 @@ class Campaigns
 		wp_localize_script($this->taxonomy, 'localizations', $this->localizations);
 		wp_enqueue_script($this->taxonomy);
 		wp_enqueue_media();
+	}
+
+	/**
+	 * Uses block's filtered/converted attributes and it's name to convert it to a gutenberg equivalent block.
+	 *
+	 * @param string $block_name Gutenberg block name.
+	 * @param array  $block_attributes block attribute array.
+	 *
+	 */
+	protected function make_gutenberg_comment(string $block_name, array $block_attributes): string
+	{
+		return '<!-- wp:' . $block_name . ' ' . wp_json_encode($block_attributes, JSON_UNESCAPED_SLASHES) . ' /-->';
+	}
+
+	/**
+	 * Class hooks.
+	 */
+	private function hooks(): void
+	{
+		add_action('post_tag_add_form_fields', [ $this, 'add_taxonomy_form_fields' ]);
+		add_action('post_tag_edit_form_fields', [ $this, 'add_taxonomy_form_fields' ]);
+		add_action('create_post_tag', [ $this, 'save_taxonomy_meta' ]);
+		add_action('edit_post_tag', [ $this, 'save_taxonomy_meta' ]);
+		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ]);
+
+		add_filter('manage_edit-post_tag_columns', [ $this, 'edit_taxonomy_columns' ]);
+		add_filter('manage_post_tag_custom_column', [ $this, 'manage_taxonomy_custom_column' ], 10, 3);
+		add_filter('manage_edit-post_tag_sortable_columns', [ $this, 'manage_taxonomy_custom_sortable_column' ], 10, 3);
 	}
 }

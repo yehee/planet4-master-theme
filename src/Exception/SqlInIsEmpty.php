@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\Exception;
 
 use Exception;
@@ -9,5 +11,4 @@ use Exception;
  */
 class SqlInIsEmpty extends Exception
 {
-
 }

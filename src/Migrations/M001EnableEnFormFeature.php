@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\Migrations;
 
 use P4\MasterTheme\Features;
@@ -12,13 +14,11 @@ use P4\MasterTheme\Settings;
  */
 class M001EnableEnFormFeature extends MigrationScript
 {
-
 	/**
 	 * Perform the actual migration.
 	 *
 	 * @param MigrationRecord $record Information on the execution, can be used to add logs.
 	 *
-	 * @return void
 	 */
 	protected static function execute(MigrationRecord $record): void
 	{

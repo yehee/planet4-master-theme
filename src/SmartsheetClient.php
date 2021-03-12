@@ -1,16 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use InvalidArgumentException;
-use WP_Error;
 
 /**
  * Handles calling the SmartSheet API.
  */
 final class SmartsheetClient
 {
-
 	/**
 	 * @var string The API key to use for the requests.
 	 */

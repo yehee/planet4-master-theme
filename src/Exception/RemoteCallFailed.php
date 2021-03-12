@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\Exception;
 
 /**
@@ -7,5 +9,4 @@ namespace P4\MasterTheme\Exception;
  */
 class RemoteCallFailed extends \Exception
 {
-
 }

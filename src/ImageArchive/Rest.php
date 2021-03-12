@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\ImageArchive;
 
 use Exception;
@@ -17,9 +19,6 @@ use WP_REST_Server;
  */
 class Rest
 {
-	/**
-	 * @var string The API path.
-	 */
 	private const REST_NAMESPACE = 'planet4/v1';
 
 	/**

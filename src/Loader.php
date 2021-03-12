@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use RuntimeException;
@@ -10,12 +12,6 @@ use RuntimeException;
  */
 final class Loader
 {
-	/**
-	 * A static instance of Loader.
-	 *
-	 * @var Loader $instance
-	 */
-	private static $instance;
 	/**
 	 * Indexed array of all the classes/services that are needed.
 	 *
@@ -28,6 +24,24 @@ final class Loader
 	 * @var array $default_services
 	 */
 	private $default_services;
+	/**
+	 * A static instance of Loader.
+	 *
+	 * @var Loader $instance
+	 */
+	private static $instance;
+
+	/**
+	 * Loader constructor.
+	 *
+	 * @param array $services The dependencies to inject.
+	 */
+	private function __construct(array $services)
+	{
+		$this->load_services($services);
+		$this->add_filters();
+		Commands::load();
+	}
 
 	/**
 	 * Singleton creational pattern.
@@ -35,9 +49,8 @@ final class Loader
 	 *
 	 * @param array $services The Controller services to inject.
 	 *
-	 * @return Loader
 	 */
-	public static function get_instance($services = []): Loader
+	public static function get_instance(array $services = []): Loader
 	{
 		if (! isset(self::$instance)) {
 			self::$instance = new self($services);
@@ -46,15 +59,100 @@ final class Loader
 	}
 
 	/**
-	 * Loader constructor.
+	 * Gets the loaded services.
 	 *
-	 * @param array $services The dependencies to inject.
+	 * @return array The loaded services.
 	 */
-	private function __construct($services)
+	public function get_services(): array
 	{
-		$this->load_services($services);
-		$this->add_filters();
-		Commands::load();
+		return $this->services;
+	}
+
+	/**
+	 * Due to a bug in WordPress core the "autosave revision" of a post is created and deleted all of the time.
+	 * This is pretty pointless and makes it impractical to add any post meta to that revision.
+	 * The logic was probably that some space could be saved it is can be determined that the autosave doesn't differ
+	 * from the current post content. However that advantage doesn't weigh up to the overhead of deleting the record and
+	 * inserting it again, each time burning through another id of the posts table.
+	 *
+	 * @see https://core.trac.wordpress.org/ticket/49532
+	 *
+	 * @param null $delete Whether to go forward with the delete (sic, see original filter where it is null initally, not used here).
+	 * @param null $post Post object.
+	 * @param null $force_delete Is true when post is not trashed but deleted permanently (always false for revisions but they are deleted anyway).
+	 *
+	 * @return bool|null If the filter returns anything else than null the post is not deleted.
+	 */
+	public function do_not_delete_autosave($delete = null, $post = null, $force_delete = null): ?bool
+	{
+		if (
+			$force_delete
+			|| ( isset($_GET['action']) && 'delete' === $_GET['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			|| ( isset($_GET['delete_all']) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			|| ! preg_match('/autosave-v\d+$/', $post->post_name)
+		) {
+			return null;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param string $rel_path Relative path to the file.
+	 * @return int timestamp of file creation
+	 */
+	public static function theme_file_ver(string $rel_path): int
+	{
+		$filepath = trailingslashit(get_template_directory()) . $rel_path;
+
+		return self::get_timestamp($filepath);
+	}
+
+	/**
+	 * Enqueue a style with a version based on the file change time.
+	 *
+	 * @param string $relative_path An existing css file.
+	 */
+	public static function enqueue_versioned_style(string $relative_path): void
+	{
+		// Create a supposedly unique handle based on the path.
+		$handle = str_replace('/[^\w]/', '', $relative_path);
+
+		$relative_path = '/' . ltrim($relative_path, '/');
+
+		$version = self::get_timestamp(get_template_directory() . $relative_path);
+
+		wp_enqueue_style(
+			$handle,
+			get_template_directory_uri() . $relative_path,
+			[],
+			$version
+		);
+	}
+
+	/**
+	 * Enqueue a script with a version based on the file change time.
+	 *
+	 * @param string $relative_path An existing js file.
+	 * @param array  $deps Dependencies of the script.
+	 * @param bool   $in_footer Whether the script should be loaded in the footer.
+	 */
+	public static function enqueue_versioned_script(string $relative_path, array $deps = [], bool $in_footer = false): void
+	{
+		// Create a supposedly unique handle based on the path.
+		$handle = str_replace('/[^\w]/', '', $relative_path);
+
+		$relative_path = '/' . ltrim($relative_path, '/');
+
+		$version = self::get_timestamp(get_template_directory() . $relative_path);
+
+		wp_enqueue_script(
+			$handle,
+			get_template_directory_uri() . $relative_path,
+			$deps,
+			$version,
+			$in_footer
+		);
 	}
 
 	/**
@@ -62,7 +160,7 @@ final class Loader
 	 *
 	 * @param array $services The dependencies to inject.
 	 */
-	private function load_services($services)
+	private function load_services(array $services): void
 	{
 
 		$this->default_services = [
@@ -124,71 +222,22 @@ final class Loader
 		}
 
 		$services = array_merge($services, $this->default_services);
-		if ($services) {
-			foreach ($services as $service) {
-				$this->services[ $service ] = new $service();
-			}
+		if (!$services) {
+			return;
 		}
-	}
 
-	/**
-	 * Gets the loaded services.
-	 *
-	 * @return array The loaded services.
-	 */
-	public function get_services(): array
-	{
-		return $this->services;
+		foreach ($services as $service) {
+			$this->services[ $service ] = new $service();
+		}
 	}
 
 	/**
 	 * Add some filters.
 	 *
-	 * @return void
 	 */
 	private function add_filters(): void
 	{
 		add_filter('pre_delete_post', [ $this, 'do_not_delete_autosave' ], 1, 3);
-	}
-
-	/**
-	 * Due to a bug in WordPress core the "autosave revision" of a post is created and deleted all of the time.
-	 * This is pretty pointless and makes it impractical to add any post meta to that revision.
-	 * The logic was probably that some space could be saved it is can be determined that the autosave doesn't differ
-	 * from the current post content. However that advantage doesn't weigh up to the overhead of deleting the record and
-	 * inserting it again, each time burning through another id of the posts table.
-	 *
-	 * @see https://core.trac.wordpress.org/ticket/49532
-	 *
-	 * @param null $delete Whether to go forward with the delete (sic, see original filter where it is null initally, not used here).
-	 * @param null $post Post object.
-	 * @param null $force_delete Is true when post is not trashed but deleted permanently (always false for revisions but they are deleted anyway).
-	 *
-	 * @return bool|null If the filter returns anything else than null the post is not deleted.
-	 */
-	public function do_not_delete_autosave($delete = null, $post = null, $force_delete = null): ?bool
-	{
-		if (
-			$force_delete
-			|| ( isset($_GET['action']) && 'delete' === $_GET['action'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			|| ( isset($_GET['delete_all']) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			|| ! preg_match('/autosave-v\d+$/', $post->post_name)
-		) {
-			return null;
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param string $rel_path Relative path to the file.
-	 * @return int timestamp of file creation
-	 */
-	public static function theme_file_ver(string $rel_path): int
-	{
-		$filepath = trailingslashit(get_template_directory()) . $rel_path;
-
-		return self::get_timestamp($filepath);
 	}
 
 	/**
@@ -208,52 +257,5 @@ final class Loader
 		}
 
 		return $ctime;
-	}
-
-	/**
-	 * Enqueue a style with a version based on the file change time.
-	 *
-	 * @param string $relative_path An existing css file.
-	 */
-	public static function enqueue_versioned_style(string $relative_path): void
-	{
-		// Create a supposedly unique handle based on the path.
-		$handle = str_replace('/[^\w]/', '', $relative_path);
-
-		$relative_path = '/' . ltrim($relative_path, '/');
-
-		$version = self::get_timestamp(get_template_directory() . $relative_path);
-
-		wp_enqueue_style(
-			$handle,
-			get_template_directory_uri() . $relative_path,
-			[],
-			$version
-		);
-	}
-
-	/**
-	 * Enqueue a script with a version based on the file change time.
-	 *
-	 * @param string $relative_path An existing js file.
-	 * @param array  $deps Dependencies of the script.
-	 * @param bool   $in_footer Whether the script should be loaded in the footer.
-	 */
-	public static function enqueue_versioned_script(string $relative_path, array $deps = [], $in_footer = false): void
-	{
-		// Create a supposedly unique handle based on the path.
-		$handle = str_replace('/[^\w]/', '', $relative_path);
-
-		$relative_path = '/' . ltrim($relative_path, '/');
-
-		$version = self::get_timestamp(get_template_directory() . $relative_path);
-
-		wp_enqueue_script(
-			$handle,
-			get_template_directory_uri() . $relative_path,
-			$deps,
-			$version,
-			$in_footer
-		);
 	}
 }

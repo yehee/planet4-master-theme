@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use ElasticPress\Features;
-use SitePress;
 use stdClass;
 use Timber\Timber;
 use UnexpectedValueException;
@@ -15,7 +16,6 @@ use WPML_Post_Element;
  */
 abstract class Search
 {
-
 	const POSTS_PER_LOAD        = 5;
 	const SHOW_SCROLL_TIMES     = 2;
 	const DEFAULT_SORT          = '_score';
@@ -29,6 +29,27 @@ abstract class Search
 	const DOCUMENT_TYPES        = [
 		'application/pdf',
 	];
+
+	/**
+	 * Templates
+	 *
+	 * @var array $templates
+	 */
+	public $templates;
+
+	/**
+	 * Context
+	 *
+	 * @var array $context
+	 */
+	public $context;
+
+	/**
+	 * Current Page
+	 *
+	 * @var int $current_page
+	 */
+	public $current_page;
 
 	/**
 	 * Search Query
@@ -71,27 +92,6 @@ abstract class Search
 	protected $total_matches;
 
 	/**
-	 * Templates
-	 *
-	 * @var array $templates
-	 */
-	public $templates;
-
-	/**
-	 * Context
-	 *
-	 * @var array $context
-	 */
-	public $context;
-
-	/**
-	 * Current Page
-	 *
-	 * @var int $current_page
-	 */
-	public $current_page;
-
-	/**
 	 * @var array|null Aggregations on the complete result set.
 	 */
 	protected $aggregations;
@@ -102,11 +102,254 @@ abstract class Search
 	protected $query_time;
 
 	/**
-	 * Initialize the class. Hook necessary actions and filters.
+	 * Adds arguments for the WP_Query that are related only to the search engine.
+	 *
+	 * @param array $args The search query args.
 	 */
-	protected function initialize()
+	abstract public function set_engines_args(array &$args): void;
+
+	/**
+	 * Conducts the actual search.
+	 *
+	 * @param string     $search_query The searched term.
+	 * @param string     $selected_sort The selected order_by.
+	 * @param array      $filters The selected filters.
+	 * @param array      $templates An indexed array with template file names. The first to be found will be used.
+	 * @param array|null $context An associative array with all the context needed to render the template found first.
+	 */
+	public function load(
+		string $search_query,
+		string $selected_sort = self::DEFAULT_SORT,
+		array $filters = [],
+		array $templates = [ 'search.twig', 'archive.twig', 'index.twig' ],
+		?array $context = null
+	): void {
+		$this->initialize();
+		$this->search_query = $search_query;
+		$this->templates    = $templates;
+
+		if ($context) {
+			$this->context = $context;
+		} else {
+			$this->context = Timber::get_context();
+
+			// Validate user input (sort, filters, etc).
+			if ($this->validate($selected_sort, $filters, $this->context)) {
+				$this->selected_sort = $selected_sort;
+				$this->filters       = $filters;
+			}
+
+			$this->posts = $this->get_posts();
+
+			if ($this->posts) {
+				$this->paged_posts = array_slice($this->posts, 0, self::POSTS_PER_LOAD);
+			}
+
+			$this->current_page = 0 === get_query_var('paged') ? 1 : get_query_var('paged');
+
+			$this->set_context($this->context);
+		}
+	}
+
+	/**
+	 * Applies user selected filters to the search if there are any and gets the filtered posts.
+	 *
+	 * @param int $paged The number of the page of the results to be shown when using pagination/load_more.
+	 *
+	 * @return array The posts of the search.
+	 */
+	public function query_posts(int $paged = 1): array
 	{
-		self::add_general_filters();
+		// Set General Query arguments.
+		$args = $this->get_general_args($paged);
+
+		// Set Filters Query arguments.
+		try {
+			$this->set_filters_args($args);
+		} catch (UnexpectedValueException $e) {
+			$this->context['exception'] = $e->getMessage();
+
+			return [];
+		}
+
+		// Set Engine Query arguments.
+		$this->set_engines_args($args);
+		add_action(
+			'ep_valid_response',
+			function ($response): void {
+				$this->aggregations = $response['aggregations'];
+				$this->query_time   = $response['took'];
+			}
+		);
+
+		$query = ( new WP_Query() );
+		$posts = $query->query($args);
+
+		$this->total_matches = $query->found_posts;
+
+		return (array) $posts;
+	}
+
+	/**
+	 * Applies user selected filters to the search if there are any and gets the filtered posts.
+	 *
+	 * @param array $args The search query args.
+	 *
+	 * @throws UnexpectedValueException When filter type is not recognized.
+	 */
+	public function set_filters_args(array &$args): void
+	{
+		if (!$this->filters) {
+			return;
+		}
+
+		foreach ($this->filters as $type => $filter_type) {
+			foreach ($filter_type as $filter) {
+				switch ($type) {
+					case 'cat':
+						$args['tax_query'][] = [
+							'taxonomy' => 'category',
+							'field'    => 'term_id',
+							'terms'    => $filter['id'],
+						];
+						break;
+					case 'tag':
+						$args['tax_query'][] = [
+							'taxonomy' => 'post_tag',
+							'field'    => 'term_id',
+							'terms'    => $filter['id'],
+						];
+						break;
+					case 'ptype':
+						// This taxonomy is used only for Posts.
+						$args['post_type']   = 'post';
+						$args['tax_query'][] = [
+							'taxonomy' => 'p4-page-type',
+							'field'    => 'term_id',
+							'terms'    => $filter['id'],
+						];
+						break;
+					case 'ctype':
+						switch ($filter['id']) {
+							case 0:
+								$args['post_type']   = 'page';
+								$args['post_status'] = 'publish';
+								$options             = get_option('planet4_options');
+								$args['post_parent'] = esc_sql($options['act_page']);
+								break;
+							case 1:
+								$args['post_type']      = 'attachment';
+								$args['post_status']    = 'inherit';
+								$args['post_mime_type'] = self::DOCUMENT_TYPES;
+								break;
+							case 2:
+								$args['post_type']             = 'page';
+								$args['post_status']           = 'publish';
+								$options                       = get_option('planet4_options');
+								$args['post_parent__not_in'][] = esc_sql($options['act_page']);
+								break;
+							case 3:
+								$args['post_type']   = 'post';
+								$args['post_status'] = 'publish';
+								break;
+							case 4:
+								$args['post_type']   = 'campaign';
+								$args['post_status'] = 'publish';
+								break;
+							case 5:
+								$args['post_type'] = 'archive';
+								break;
+							default:
+								throw new UnexpectedValueException('Unexpected content type!');
+						}
+						break;
+					default:
+						throw new UnexpectedValueException('Unexpected filter!');
+				}
+			}
+		}
+	}
+
+	/**
+	 * Validates the input.
+	 *
+	 * @param string $selected_sort The selected orderby to be validated.
+	 * @param array  $filters The selected filters to be validated.
+	 * @param array  $context Associative array with the data to be passed to the view.
+	 *
+	 * @return bool True if validation is ok, false if validation fails.
+	 */
+	public function validate(string &$selected_sort, array &$filters, array $context): bool
+	{
+		$selected_sort = filter_var($selected_sort, FILTER_SANITIZE_STRING);
+
+		if (
+			! isset($context['sort_options'])
+			|| ! array_key_exists($selected_sort, $context['sort_options'])
+		) {
+			$selected_sort = self::DEFAULT_SORT;
+		}
+
+		if ($filters) {
+			foreach ($filters as &$filter_type) {
+				foreach ($filter_type as &$filter) {
+					$filter['id'] = filter_var($filter['id'], FILTER_VALIDATE_INT);
+					if (false === $filter['id'] || null === $filter['id'] || $filter['id'] < 0) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Adds a section with a Load more button.
+	 *
+	 * @param array|null $args The array with the data for the pagination.
+	 */
+	public function add_load_more(?array $args = null): void
+	{
+		$this->context['load_more'] = $args ?? [
+			'posts_per_load' => self::POSTS_PER_LOAD,
+			// Translators: %s = number of results per page.
+			'button_text'    => sprintf(__('Show %s more results', 'planet4-master-theme'), self::POSTS_PER_LOAD),
+			'async'          => true,
+		];
+	}
+
+	/**
+	 * View the Search page template.
+	 */
+	public function view(): void
+	{
+		Timber::render($this->templates, $this->context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
+	}
+
+	/**
+	 * View the paged posts of the next page/load.
+	 */
+	public function view_paged_posts(): void
+	{
+		// TODO - The $paged_context related code should be transferred to set_results_context method for better separation of concerns.
+		if (!$this->paged_posts) {
+			return;
+		}
+
+		$paged_context['settings'] = get_option('planet4_options');
+
+		$paged_context['dummy_thumbnail'] = get_template_directory_uri() . self::DUMMY_THUMBNAIL;
+
+		foreach ($this->paged_posts as $index => $post) {
+			$paged_context['post'] = $post;
+			if (0 === $index % self::POSTS_PER_LOAD) {
+				$paged_context['first_of_the_page'] = true;
+			} else {
+				$paged_context['first_of_the_page'] = false;
+			}
+			Timber::render([ 'tease-search.twig' ], $paged_context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
+		}
 	}
 
 	/**
@@ -159,15 +402,17 @@ abstract class Search
 		// language in time that has the post available.
 		add_filter(
 			'ep_ignore_invalid_dates',
-			function ($ignore, $post_id, $post) {
+			function ($ignore, $post_id, $post): void {
 				/**
 				 * @var SitePress
 				 */
 				global $sitepress;
-				if ($sitepress) {
-					$lang_code = ( new WPML_Post_Element($post->ID, $sitepress) )->get_language_code();
-					$sitepress->switch_lang($lang_code);
+				if (!$sitepress) {
+					return;
 				}
+
+				$lang_code = ( new WPML_Post_Element($post->ID, $sitepress) )->get_language_code();
+				$sitepress->switch_lang($lang_code);
 			},
 			20,
 			3
@@ -246,108 +491,137 @@ abstract class Search
 		);
 	}
 
-
-	/**
-	 * Conducts the actual search.
-	 *
-	 * @param string     $search_query The searched term.
-	 * @param string     $selected_sort The selected order_by.
-	 * @param array      $filters The selected filters.
-	 * @param array      $templates An indexed array with template file names. The first to be found will be used.
-	 * @param array|null $context An associative array with all the context needed to render the template found first.
-	 */
-	public function load(
-		$search_query,
-		$selected_sort = self::DEFAULT_SORT,
-		$filters = [],
-		$templates = [ 'search.twig', 'archive.twig', 'index.twig' ],
-		$context = null
-	) {
-		$this->initialize();
-		$this->search_query = $search_query;
-		$this->templates    = $templates;
-
-		if ($context) {
-			$this->context = $context;
-		} else {
-			$this->context = Timber::get_context();
-
-			// Validate user input (sort, filters, etc).
-			if ($this->validate($selected_sort, $filters, $this->context)) {
-				$this->selected_sort = $selected_sort;
-				$this->filters       = $filters;
-			}
-
-			$this->posts = $this->get_posts();
-
-			if ($this->posts) {
-				$this->paged_posts = array_slice($this->posts, 0, self::POSTS_PER_LOAD);
-			}
-
-			$this->current_page = ( 0 === get_query_var('paged') ) ? 1 : get_query_var('paged');
-
-			$this->set_context($this->context);
-		}
-	}
-
 	/**
 	 * Gets the paged posts that belong to the next page/load and are to be used with the twig template.
 	 */
-	public static function get_paged_posts()
+	public static function get_paged_posts(): void
 	{
 		// If this is an ajax call.
-		if (wp_doing_ajax()) {
-			$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
-			$paged         = filter_input(INPUT_GET, 'paged', FILTER_SANITIZE_STRING);
+		if (!wp_doing_ajax()) {
+			return;
+		}
 
-			// Check if call action is correct.
-			if ('get_paged_posts' === $search_action) {
-				$search_async = new static();
-				$search_async->set_context($search_async->context);
-				$search_async->search_query = urldecode(filter_input(INPUT_GET, 'search_query', FILTER_SANITIZE_STRING));
+		$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
+		$paged         = filter_input(INPUT_GET, 'paged', FILTER_SANITIZE_STRING);
 
-				// Get the decoded url query string and then use it as key for redis.
-				$query_string_full = urldecode(filter_input(INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING));
-				$query_string      = str_replace('&query-string=', '', strstr($query_string_full, '&query-string='));
+		// Check if call action is correct.
+		if ('get_paged_posts' === $search_action) {
+			$search_async = new static();
+			$search_async->set_context($search_async->context);
+			$search_async->search_query = urldecode(filter_input(INPUT_GET, 'search_query', FILTER_SANITIZE_STRING));
 
-				$search_async->current_page = $paged;
+			// Get the decoded url query string and then use it as key for redis.
+			$query_string_full = urldecode(filter_input(INPUT_SERVER, 'QUERY_STRING', FILTER_SANITIZE_STRING));
+			$query_string      = str_replace('&query-string=', '', strstr($query_string_full, '&query-string='));
 
-				parse_str($query_string, $filters_array);
-				$selected_sort    = $filters_array['orderby'] ?? self::DEFAULT_SORT;
-				$selected_filters = $filters_array['f'] ?? [];
-				$filters          = [];
+			$search_async->current_page = $paged;
 
-				// Handle submitted filter options.
-				if ($selected_filters && is_array($selected_filters)) {
-					foreach ($selected_filters as $type => $filter_type) {
-						if (! is_array($filter_type)) {
-							continue;
-						}
-						foreach ($filter_type as $name => $id) {
-							$filters[ $type ][] = [
-								'id'   => $id,
-								'name' => $name,
-							];
-						}
+			parse_str($query_string, $filters_array);
+			$selected_sort    = $filters_array['orderby'] ?? self::DEFAULT_SORT;
+			$selected_filters = $filters_array['f'] ?? [];
+			$filters          = [];
+
+			// Handle submitted filter options.
+			if ($selected_filters && is_array($selected_filters)) {
+				foreach ($selected_filters as $type => $filter_type) {
+					if (! is_array($filter_type)) {
+						continue;
+					}
+					foreach ($filter_type as $name => $id) {
+						$filters[ $type ][] = [
+							'id'   => $id,
+							'name' => $name,
+						];
 					}
 				}
-
-				// Validate user input (sort, filters, etc).
-				if ($search_async->validate($selected_sort, $filters, $search_async->context)) {
-					$search_async->selected_sort = $selected_sort;
-					$search_async->filters       = $filters;
-				}
-
-				$search_async->paged_posts = $search_async->get_posts($search_async->current_page);
-
-				// If there are paged results then set their context and send them back to client.
-				if ($search_async->paged_posts) {
-					$search_async->set_results_context($search_async->context);
-					$search_async->view_paged_posts();
-				}
 			}
-			wp_die();
+
+			// Validate user input (sort, filters, etc).
+			if ($search_async->validate($selected_sort, $filters, $search_async->context)) {
+				$search_async->selected_sort = $selected_sort;
+				$search_async->filters       = $filters;
+			}
+
+			$search_async->paged_posts = $search_async->get_posts($search_async->current_page);
+
+			// If there are paged results then set their context and send them back to client.
+			if ($search_async->paged_posts) {
+				$search_async->set_results_context($search_async->context);
+				$search_async->view_paged_posts();
+			}
 		}
+		wp_die();
+	}
+
+	/**
+	 * Customize which mime types we want to search for regarding attachments.
+	 *
+	 * @param string $where The WHERE clause of the query.
+	 *
+	 * @return string The edited WHERE clause.
+	 */
+	public static function edit_search_mime_types(string $where): string
+	{
+		global $wpdb;
+
+		$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
+
+		if (( ! is_admin() && is_search() ) || ( wp_doing_ajax() && ( 'get_paged_posts' === $search_action ) )) {
+			$mime_types = implode(',', self::DOCUMENT_TYPES);
+			$where     .= ' AND ' . $wpdb->posts . '.post_mime_type IN("' . $mime_types . '","") ';
+		}
+
+		return $where;
+	}
+
+	/**
+	 * Fetch all attachments that we don't want to include in search,
+	 * so that we can exclude them from ElasticPress sync.
+	 *
+	 * @param array<mixed> $args The args ElasticPress will use to fetch the ids of posts that will be synced.
+	 *
+	 * @return mixed The args with exclusion of unwanted ids.
+	 * @throws Exception\SqlInIsEmpty Well it really won't unless we make self::DOCUMENT_TYPES into an empty array.
+	 */
+	public static function exclude_unwanted_attachments(array $args)
+	{
+		global $wpdb;
+
+		$params = new SqlParameters();
+
+		$sql = 'SELECT id FROM ' . $params->identifier($wpdb->posts)
+			. ' WHERE post_type = "attachment"'
+			. ' AND post_mime_type NOT IN ' . $params->string_list(self::DOCUMENT_TYPES);
+
+		$unwanted_attachment_ids = $wpdb->get_col(
+			$wpdb->prepare($sql, $params->get_values()) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		);
+
+		$args['post__not_in'] = $unwanted_attachment_ids;
+
+		return $args;
+	}
+
+	/**
+	 * Exclude password protected content from ElasticPress sync.
+	 *
+	 * @param array<mixed> $args The args ElasticPress will use to fetch the ids of posts that will be synced.
+	 *
+	 * @return mixed The args with exclusion of password protected content.
+	 */
+	public static function hide_password_protected_content(array $args)
+	{
+		$args['has_password'] = false;
+
+		return $args;
+	}
+
+	/**
+	 * Initialize the class. Hook necessary actions and filters.
+	 */
+	protected function initialize(): void
+	{
+		self::add_general_filters();
 	}
 
 	/**
@@ -358,7 +632,7 @@ abstract class Search
 	 *
 	 * @return array The respective Timber Posts.
 	 */
-	protected function get_posts($paged = 1): array
+	protected function get_posts(int $paged = 1): array
 	{
 		$template_posts = [];
 
@@ -410,52 +684,13 @@ abstract class Search
 	}
 
 	/**
-	 * Applies user selected filters to the search if there are any and gets the filtered posts.
-	 *
-	 * @param int $paged The number of the page of the results to be shown when using pagination/load_more.
-	 *
-	 * @return array The posts of the search.
-	 */
-	public function query_posts($paged = 1): array
-	{
-		// Set General Query arguments.
-		$args = $this->get_general_args($paged);
-
-		// Set Filters Query arguments.
-		try {
-			$this->set_filters_args($args);
-		} catch (UnexpectedValueException $e) {
-			$this->context['exception'] = $e->getMessage();
-
-			return [];
-		}
-
-		// Set Engine Query arguments.
-		$this->set_engines_args($args);
-		add_action(
-			'ep_valid_response',
-			function ($response) {
-				$this->aggregations = $response['aggregations'];
-				$this->query_time   = $response['took'];
-			}
-		);
-
-		$query = ( new WP_Query() );
-		$posts = $query->query($args);
-
-		$this->total_matches = $query->found_posts;
-
-		return (array) $posts;
-	}
-
-	/**
 	 * Sets arguments for the WP_Query that are related to the application.
 	 *
 	 * @param int $paged The number of the page of the results to be shown when using pagination/load_more.
 	 *
 	 * @return array
 	 */
-	protected function get_general_args($paged): array
+	protected function get_general_args(int $paged): array
 	{
 		$args = [
 			'posts_per_page' => self::POSTS_PER_LOAD,
@@ -537,155 +772,11 @@ abstract class Search
 	}
 
 	/**
-	 * Get the post types that should be available in search.
-	 *
-	 * @return array The post types that should be in search.
-	 */
-	private static function get_post_types()
-	{
-		$types = [
-			'page',
-			'campaign',
-			'post',
-			'attachment',
-		];
-
-		if (self::should_include_archive()) {
-			$types[] = PostArchive::POST_TYPE;
-		}
-
-		return $types;
-	}
-
-	/**
-	 * Whether archived content should be in the results.
-	 *
-	 * @return bool Whether archived content should be in the results.
-	 */
-	private static function should_include_archive(): bool
-	{
-		$setting = planet4_get_option('include_archive_content_for');
-
-		return 'all' === $setting || ( 'logged_in' === $setting && is_user_logged_in() );
-	}
-
-	/**
-	 * Return only existing terms with their link.
-	 * We need to do this as the term might have been removed but ES could still have it.
-	 *
-	 * @param array $terms The terms to filter.
-	 *
-	 * @return mixed|null All existing terms, with link.
-	 */
-	private static function filter_existing_terms(array $terms)
-	{
-		return array_reduce(
-			$terms,
-			static function ($carry, $term) {
-				$link = get_term_link($term['term_id']);
-
-				if (! is_wp_error($link)) {
-					$term['link'] = $link;
-					$carry[]      = $term;
-				}
-
-				return $carry;
-			},
-			[]
-		);
-	}
-
-	/**
-	 * Adds arguments for the WP_Query that are related only to the search engine.
-	 *
-	 * @param array $args The search query args.
-	 */
-	abstract public function set_engines_args(&$args);
-
-	/**
-	 * Applies user selected filters to the search if there are any and gets the filtered posts.
-	 *
-	 * @param array $args The search query args.
-	 *
-	 * @throws UnexpectedValueException When filter type is not recognized.
-	 */
-	public function set_filters_args(&$args)
-	{
-		if ($this->filters) {
-			foreach ($this->filters as $type => $filter_type) {
-				foreach ($filter_type as $filter) {
-					switch ($type) {
-						case 'cat':
-							$args['tax_query'][] = [
-								'taxonomy' => 'category',
-								'field'    => 'term_id',
-								'terms'    => $filter['id'],
-							];
-							break;
-						case 'tag':
-							$args['tax_query'][] = [
-								'taxonomy' => 'post_tag',
-								'field'    => 'term_id',
-								'terms'    => $filter['id'],
-							];
-							break;
-						case 'ptype':
-							// This taxonomy is used only for Posts.
-							$args['post_type']   = 'post';
-							$args['tax_query'][] = [
-								'taxonomy' => 'p4-page-type',
-								'field'    => 'term_id',
-								'terms'    => $filter['id'],
-							];
-							break;
-						case 'ctype':
-							switch ($filter['id']) {
-								case 0:
-									$args['post_type']   = 'page';
-									$args['post_status'] = 'publish';
-									$options             = get_option('planet4_options');
-									$args['post_parent'] = esc_sql($options['act_page']);
-									break;
-								case 1:
-									$args['post_type']      = 'attachment';
-									$args['post_status']    = 'inherit';
-									$args['post_mime_type'] = self::DOCUMENT_TYPES;
-									break;
-								case 2:
-									$args['post_type']             = 'page';
-									$args['post_status']           = 'publish';
-									$options                       = get_option('planet4_options');
-									$args['post_parent__not_in'][] = esc_sql($options['act_page']);
-									break;
-								case 3:
-									$args['post_type']   = 'post';
-									$args['post_status'] = 'publish';
-									break;
-								case 4:
-									$args['post_type']   = 'campaign';
-									$args['post_status'] = 'publish';
-									break;
-								case 5:
-									$args['post_type'] = 'archive';
-									break;
-								default:
-									throw new UnexpectedValueException('Unexpected content type!');
-							}
-							break;
-						default:
-							throw new UnexpectedValueException('Unexpected filter!');
-					}
-				}
-			}
-		}
-	}
-
-	/**
 	 * Sets the P4 Search page context.
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_context(&$context)
+	protected function set_context(array &$context): void
 	{
 		$this->set_general_context($context);
 		try {
@@ -701,7 +792,7 @@ abstract class Search
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_general_context(&$context)
+	protected function set_general_context(array &$context): void
 	{
 
 		// Search context.
@@ -741,9 +832,11 @@ abstract class Search
 			$context['page_title'] = sprintf(_n('%d result', '%d results', $context['found_posts'], 'planet4-master-theme'), $context['found_posts']);
 		}
 
-		if (is_user_logged_in()) {
-			$context['query_time'] = $this->query_time;
+		if (!is_user_logged_in()) {
+			return;
 		}
+
+		$context['query_time'] = $this->query_time;
 	}
 
 	/**
@@ -753,7 +846,7 @@ abstract class Search
 	 *
 	 * @throws UnexpectedValueException When filter type is not recognized.
 	 */
-	protected function set_filters_context(&$context)
+	protected function set_filters_context(&$context): void
 	{
 		// Retrieve P4 settings in order to check that we add only categories that are children of the Issues category.
 		$options = get_option('planet4_options');
@@ -868,14 +961,16 @@ abstract class Search
 				}
 			);
 		}
-		if ($context['tags'] ?? false) {
-			uasort(
-				$context['tags'],
-				function ($a, $b) {
-					return strcmp($a['name'], $b['name']);
-				}
-			);
+		if (!($context['tags'] ?? false)) {
+			return;
 		}
+
+		uasort(
+			$context['tags'],
+			function ($a, $b) {
+				return strcmp($a['name'], $b['name']);
+			}
+		);
 	}
 
 	/**
@@ -888,7 +983,7 @@ abstract class Search
 	 *
 	 * @param array $context Associative array with the data to be passed to the view.
 	 */
-	protected function set_results_context(&$context)
+	protected function set_results_context(array &$context): void
 	{
 
 		$posts = $this->posts ?? $this->paged_posts;
@@ -907,10 +1002,12 @@ abstract class Search
 		if (! empty($this->aggregations)) {
 			$aggs = $this->aggregations['with_post_filter'];
 			foreach ($aggs['post_parent']['buckets'] as $parent_agg) {
-				if ($parent_agg['key'] === (int) $options['act_page']) {
-					$act_page_count                           = $parent_agg['doc_count'];
-					$context['content_types']['0']['results'] = $act_page_count;
+				if ($parent_agg['key'] !== (int) $options['act_page']) {
+					continue;
 				}
+
+				$act_page_count                           = $parent_agg['doc_count'];
+				$context['content_types']['0']['results'] = $act_page_count;
 			}
 
 			foreach ($aggs['post_type']['buckets'] as $post_type_agg) {
@@ -931,9 +1028,11 @@ abstract class Search
 				if ('campaign' === $post_type_agg['key']) {
 					$context['content_types']['4']['results'] = $post_type_agg['doc_count'];
 				}
-				if ('archive' === $post_type_agg['key'] && self::should_include_archive()) {
-					$context['content_types']['5']['results'] = $post_type_agg['doc_count'];
+				if ('archive' !== $post_type_agg['key'] || !self::should_include_archive()) {
+					continue;
 				}
+
+				$context['content_types']['5']['results'] = $post_type_agg['doc_count'];
 			}
 
 			foreach ($aggs['p4-page-type']['buckets'] as $p4_post_type_agg) {
@@ -954,9 +1053,11 @@ abstract class Search
 
 				// Category <-> Issue.
 				// Consider Issues that have multiple Categories.
-				if ($category->parent === (int) $options['issues_parent_category']) {
-					$context['categories'][ $category->term_id ]['results'] = $category_agg['doc_count'];
+				if ($category->parent !== (int) $options['issues_parent_category']) {
+					continue;
 				}
+
+				$context['categories'][ $category->term_id ]['results'] = $category_agg['doc_count'];
 			}
 
 			foreach ($aggs['tags']['buckets'] as $tag_agg) {
@@ -1006,14 +1107,75 @@ abstract class Search
 			$post->content_type      = $content_type;
 
 			// Page Type <-> Category. This taxonomy is used only for Posts.
-			if ('post' === $post->post_type && ! empty($post->terms['p4-page-type'])) {
-				$post->page_types = [
-					self::get_p4_post_type(
-						$post->terms['p4-page-type'][0]
-					),
-				];
+			if ('post' !== $post->post_type || empty($post->terms['p4-page-type'])) {
+				continue;
 			}
+
+			$post->page_types = [
+				self::get_p4_post_type(
+					$post->terms['p4-page-type'][0]
+				),
+			];
 		}
+	}
+
+	/**
+	 * Get the post types that should be available in search.
+	 *
+	 * @return array The post types that should be in search.
+	 */
+	private static function get_post_types(): array
+	{
+		$types = [
+			'page',
+			'campaign',
+			'post',
+			'attachment',
+		];
+
+		if (self::should_include_archive()) {
+			$types[] = PostArchive::POST_TYPE;
+		}
+
+		return $types;
+	}
+
+	/**
+	 * Whether archived content should be in the results.
+	 *
+	 * @return bool Whether archived content should be in the results.
+	 */
+	private static function should_include_archive(): bool
+	{
+		$setting = planet4_get_option('include_archive_content_for');
+
+		return 'all' === $setting || ( 'logged_in' === $setting && is_user_logged_in() );
+	}
+
+	/**
+	 * Return only existing terms with their link.
+	 * We need to do this as the term might have been removed but ES could still have it.
+	 *
+	 * @param array $terms The terms to filter.
+	 *
+	 * @return mixed|null All existing terms, with link.
+	 */
+	private static function filter_existing_terms(array $terms)
+	{
+		return array_reduce(
+			$terms,
+			static function ($carry, $term) {
+				$link = get_term_link($term['term_id']);
+
+				if (! is_wp_error($link)) {
+					$term['link'] = $link;
+					$carry[]      = $term;
+				}
+
+				return $carry;
+			},
+			[]
+		);
 	}
 
 	/**
@@ -1034,148 +1196,5 @@ abstract class Search
 		}
 
 		return null;
-	}
-
-	/**
-	 * Customize which mime types we want to search for regarding attachments.
-	 *
-	 * @param string $where The WHERE clause of the query.
-	 *
-	 * @return string The edited WHERE clause.
-	 */
-	public static function edit_search_mime_types($where): string
-	{
-		global $wpdb;
-
-		$search_action = filter_input(INPUT_GET, 'search-action', FILTER_SANITIZE_STRING);
-
-		if (( ! is_admin() && is_search() ) || ( wp_doing_ajax() && ( 'get_paged_posts' === $search_action ) )) {
-			$mime_types = implode(',', self::DOCUMENT_TYPES);
-			$where     .= ' AND ' . $wpdb->posts . '.post_mime_type IN("' . $mime_types . '","") ';
-		}
-
-		return $where;
-	}
-
-	/**
-	 * Validates the input.
-	 *
-	 * @param string $selected_sort The selected orderby to be validated.
-	 * @param array  $filters The selected filters to be validated.
-	 * @param array  $context Associative array with the data to be passed to the view.
-	 *
-	 * @return bool True if validation is ok, false if validation fails.
-	 */
-	public function validate(&$selected_sort, &$filters, $context): bool
-	{
-		$selected_sort = filter_var($selected_sort, FILTER_SANITIZE_STRING);
-
-		if (
-			! isset($context['sort_options'])
-			|| ! array_key_exists($selected_sort, $context['sort_options'])
-		) {
-			$selected_sort = self::DEFAULT_SORT;
-		}
-
-		if ($filters) {
-			foreach ($filters as &$filter_type) {
-				foreach ($filter_type as &$filter) {
-					$filter['id'] = filter_var($filter['id'], FILTER_VALIDATE_INT);
-					if (false === $filter['id'] || null === $filter['id'] || $filter['id'] < 0) {
-						return false;
-					}
-				}
-			}
-		}
-
-		return true;
-	}
-
-	/**
-	 * Adds a section with a Load more button.
-	 *
-	 * @param array|null $args The array with the data for the pagination.
-	 */
-	public function add_load_more($args = null)
-	{
-		$this->context['load_more'] = $args ?? [
-			'posts_per_load' => self::POSTS_PER_LOAD,
-			// Translators: %s = number of results per page.
-			'button_text'    => sprintf(__('Show %s more results', 'planet4-master-theme'), self::POSTS_PER_LOAD),
-			'async'          => true,
-		];
-	}
-
-	/**
-	 * View the Search page template.
-	 */
-	public function view()
-	{
-		Timber::render($this->templates, $this->context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
-	}
-
-	/**
-	 * View the paged posts of the next page/load.
-	 */
-	public function view_paged_posts()
-	{
-		// TODO - The $paged_context related code should be transferred to set_results_context method for better separation of concerns.
-		if ($this->paged_posts) {
-			$paged_context['settings'] = get_option('planet4_options');
-
-			$paged_context['dummy_thumbnail'] = get_template_directory_uri() . self::DUMMY_THUMBNAIL;
-
-			foreach ($this->paged_posts as $index => $post) {
-				$paged_context['post'] = $post;
-				if (0 === $index % self::POSTS_PER_LOAD) {
-					$paged_context['first_of_the_page'] = true;
-				} else {
-					$paged_context['first_of_the_page'] = false;
-				}
-				Timber::render([ 'tease-search.twig' ], $paged_context, self::DEFAULT_CACHE_TTL, \Timber\Loader::CACHE_OBJECT);
-			}
-		}
-	}
-
-	/**
-	 * Fetch all attachments that we don't want to include in search,
-	 * so that we can exclude them from ElasticPress sync.
-	 *
-	 * @param mixed[] $args The args ElasticPress will use to fetch the ids of posts that will be synced.
-	 *
-	 * @return mixed The args with exclusion of unwanted ids.
-	 * @throws Exception\SqlInIsEmpty Well it really won't unless we make self::DOCUMENT_TYPES into an empty array.
-	 */
-	public static function exclude_unwanted_attachments($args)
-	{
-		global $wpdb;
-
-		$params = new SqlParameters();
-
-		$sql = 'SELECT id FROM ' . $params->identifier($wpdb->posts)
-			. ' WHERE post_type = "attachment"'
-			. ' AND post_mime_type NOT IN ' . $params->string_list(self::DOCUMENT_TYPES);
-
-		$unwanted_attachment_ids = $wpdb->get_col(
-			$wpdb->prepare($sql, $params->get_values()) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		);
-
-		$args['post__not_in'] = $unwanted_attachment_ids;
-
-		return $args;
-	}
-
-	/**
-	 * Exclude password protected content from ElasticPress sync.
-	 *
-	 * @param mixed[] $args The args ElasticPress will use to fetch the ids of posts that will be synced.
-	 *
-	 * @return mixed The args with exclusion of password protected content.
-	 */
-	public static function hide_password_protected_content($args)
-	{
-		$args['has_password'] = false;
-
-		return $args;
 	}
 }

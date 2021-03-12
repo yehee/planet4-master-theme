@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class Context
 {
-
 	/**
 	 * Set context relating to the header
 	 *
@@ -15,7 +16,7 @@ class Context
 	 * @param array  $page_meta_data  meta data of page.
 	 * @param String $post_title the title of the post.
 	 */
-	public static function set_header(&$context, $page_meta_data, $post_title)
+	public static function set_header(array &$context, array $page_meta_data, string $post_title): void
 	{
 		$context['header_title']                = is_front_page() ? ( $page_meta_data['p4_title'] ?? '' ) : ( $page_meta_data['p4_title'] ?? $post_title );
 		$context['header_subtitle']             = $page_meta_data['p4_subtitle'] ?? '';
@@ -31,7 +32,7 @@ class Context
 	 *
 	 * @param array $context To be set.
 	 */
-	public static function set_background_image(&$context)
+	public static function set_background_image(array &$context): void
 	{
 		$background_image_id                = get_post_meta(get_the_ID(), 'background_image_id', 1);
 		$context['background_image']        = wp_get_attachment_url($background_image_id);
@@ -44,7 +45,7 @@ class Context
 	 * @param array  $context To be set.
 	 * @param object $post That the context refers to.
 	 */
-	public static function set_og_meta_fields(&$context, $post)
+	public static function set_og_meta_fields(array &$context, object $post): void
 	{
 		$context['og_title']       = $post->get_og_title();
 		$context['og_description'] = $post->get_og_description();
@@ -57,7 +58,7 @@ class Context
 	 * @param array $context Context to be set.
 	 * @param array $meta Meta data of the page.
 	 */
-	public static function set_campaign_datalayer(&$context, $meta)
+	public static function set_campaign_datalayer(array &$context, array $meta): void
 	{
 		$context['cf_campaign_name'] = $meta['p4_campaign_name'] ?? '';
 		$context['cf_basket_name']   = $meta['p4_basket_name'] ?? '';
@@ -77,7 +78,7 @@ class Context
 	 * @param string $global_project The Global Project value.
 	 * @return string The campaign scope.
 	 */
-	private static function get_campaign_scope($global_project)
+	private static function get_campaign_scope(string $global_project): string
 	{
 		switch ($global_project) {
 			case 'Local Campaign':

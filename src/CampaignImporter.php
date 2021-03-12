@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class CampaignImporter
 {
-
 	/**
 	 * Old and new attachment ids mapping var
 	 *
@@ -31,12 +32,12 @@ class CampaignImporter
 	/**
 	 * Filter the old attachement Ids from Campaign and replace them with the newly imported attachment Ids.
 	 *
-	 * @param integer $post_id Post ID.
-	 * @param integer $original_post_id Original Post ID.
+	 * @param int $post_id Post ID.
+	 * @param int $original_post_id Original Post ID.
 	 * @param array   $postdata Post data array.
 	 * @param array   $post Post array.
 	 */
-	public function update_campaign_attachements($post_id, $original_post_id, $postdata, $post)
+	public function update_campaign_attachements(int $post_id, int $original_post_id, array $postdata, array $post): void
 	{
 		if ('campaign' !== $post['post_type']) {
 			return;
@@ -135,17 +136,21 @@ class CampaignImporter
 				preg_match_all('#(\d+)#', $new_filter_str, $matches, PREG_SET_ORDER);
 
 				foreach ($matches as $old_id) {
-					if (isset($this->attachment_mapping[ $old_id[0] ])) {
-						$new_filter_str = str_replace($old_id[0], $this->attachment_mapping[ $old_id[0] ], $new_filter_str);
+					if (!isset($this->attachment_mapping[ $old_id[0] ])) {
+						continue;
 					}
+
+					$new_filter_str = str_replace($old_id[0], $this->attachment_mapping[ $old_id[0] ], $new_filter_str);
 				}
 				$filter_data_mapping[] = [ $filter_str, $new_filter_str ];
 			} else {
 				foreach ($this->attachment_mapping as $old_id => $new_id) {
 					$updated_str = str_replace($old_id, $new_id, $filter_str);
-					if ($updated_str !== $filter_str) {
-						$filter_data_mapping[] = [ $filter_str, $updated_str ];
+					if ($updated_str === $filter_str) {
+						continue;
 					}
+
+					$filter_data_mapping[] = [ $filter_str, $updated_str ];
 				}
 			}
 		}
@@ -159,11 +164,15 @@ class CampaignImporter
 		$campaign_postmeta = [];
 		if (isset($post['postmeta'])) {
 			foreach ($post['postmeta'] as $metakey => $metadata) {
-				if ('background_image_id' === $metadata['key']) {
-					if (isset($this->attachment_mapping[ $metadata['value'] ])) {
-						$post['postmeta'][ $metakey ]['value'] = $this->attachment_mapping[ $metadata['value'] ];
-					}
+				if ('background_image_id' !== $metadata['key']) {
+					continue;
 				}
+
+				if (!isset($this->attachment_mapping[ $metadata['value'] ])) {
+					continue;
+				}
+
+				$post['postmeta'][ $metakey ]['value'] = $this->attachment_mapping[ $metadata['value'] ];
 			}
 			$campaign_postmeta = $post['postmeta'];
 		}
@@ -181,11 +190,11 @@ class CampaignImporter
 	 * Update campaign attachement source ID in attachment metadata for future data mapping purpose.
 	 *
 	 * @param array   $post_terms Post term array.
-	 * @param integer $post_id Post ID.
+	 * @param int $post_id Post ID.
 	 * @param object  $post Post object.
 	 * @return array  $post_terms Post term array.
 	 */
-	public function filter_wp_import_post_terms($post_terms, $post_id, $post)
+	public function filter_wp_import_post_terms(array $post_terms, int $post_id, object $post): array
 	{
 		if ('attachment' === $post['post_type']) {
 			$attachment_metadata = wp_get_attachment_metadata($post_id);
@@ -203,7 +212,7 @@ class CampaignImporter
 	/**
 	 * Clean the campaign attachment metadata.
 	 */
-	public function action_import_end()
+	public function action_import_end(): void
 	{
 		global $wpdb;
 
@@ -229,7 +238,7 @@ class CampaignImporter
 	 *
 	 * @return array
 	 */
-	public function set_imported_campaigns_as_drafts($postdata, $post)
+	public function set_imported_campaigns_as_drafts(array $postdata, array $post): array
 	{
 		if ('campaign' === $post['post_type']) {
 			$postdata['post_status'] = 'draft';
@@ -247,7 +256,7 @@ class CampaignImporter
 	 *
 	 * @return array The normalized post meta fields.
 	 */
-	public function process_campaign_metas($post_meta)
+	public function process_campaign_metas(array $post_meta): array
 	{
 		$p4_options = get_option('planet4_options');
 		// 1. Exclude style fields the option for that is set or if it's passed in the form data.
@@ -258,9 +267,11 @@ class CampaignImporter
 			// Also exclude the old attribute as the code still falls back to it.
 			$excluded_keys = array_merge(PostCampaign::META_FIELDS, [ '_campaign_page_template' ]);
 			foreach ($post_meta as $index => $meta) {
-				if (in_array($meta['key'], $excluded_keys, true)) {
-					unset($post_meta[ $index ]);
+				if (!in_array($meta['key'], $excluded_keys, true)) {
+					continue;
 				}
+
+				unset($post_meta[ $index ]);
 			}
 		} else {
 			// 2. Populate the new `theme` field and unset the old `_campaign_page_template if the new doesn't exist.
@@ -287,11 +298,11 @@ class CampaignImporter
 	 * Skip already existing postmeta data from import.
 	 *
 	 * @param array   $postmeta The to be imported post meta fields.
-	 * @param integer $post_id Post ID.
+	 * @param int $post_id Post ID.
 	 *
 	 * @return array The cleaned post meta fields.
 	 */
-	public function skip_duplicate_postmeta_import($postmeta, $post_id)
+	public function skip_duplicate_postmeta_import(array $postmeta, int $post_id): array
 	{
 		$existing_postmeta = get_post_meta($post_id);
 

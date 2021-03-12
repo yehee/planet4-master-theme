@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use Exception;
@@ -13,6 +15,14 @@ use Exception;
 abstract class MigrationScript
 {
 	/**
+	 * Perform the actual migration.
+	 *
+	 * @param MigrationRecord $record Information on the execution, can be used to add logs.
+	 *
+	 */
+	abstract protected static function execute(MigrationRecord $record): void;
+
+	/**
 	 * Get a unique identifier, achieved here by using the FQCN.
 	 *
 	 * @return string The unique identifier.
@@ -21,15 +31,6 @@ abstract class MigrationScript
 	{
 		return static::class;
 	}
-
-	/**
-	 * Perform the actual migration.
-	 *
-	 * @param MigrationRecord $record Information on the execution, can be used to add logs.
-	 *
-	 * @return void
-	 */
-	abstract protected static function execute(MigrationRecord $record): void;
 
 	/**
 	 * Log the time and run the migration.

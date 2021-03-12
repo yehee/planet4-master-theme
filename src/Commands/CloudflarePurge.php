@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\Commands;
 
 use CF\Integration\DefaultConfig;
@@ -16,27 +18,6 @@ use WP_CLI;
  */
 class CloudflarePurge extends Command
 {
-
-	/**
-	 * The name to access the command.
-	 *
-	 * @return string The command name.
-	 */
-	protected static function get_name(): string
-	{
-		return 'p4-cf-purge';
-	}
-
-	/**
-	 * The description shown in the argument's help.
-	 *
-	 * @return string The description text.
-	 */
-	protected static function get_short_description(): string
-	{
-		return 'Purge urls from Cloudflare cache';
-	}
-
 	/**
 	 * The logic of the command. Has WP_CLI command signature.
 	 *
@@ -79,11 +60,33 @@ class CloudflarePurge extends Command
 			$ok = $api->zonePurgeFiles($zone_id, $chunk);
 			// It's unlikely that only some of the chunks will fail, as Cloudflare's API responds with success
 			// for any url, even if on non-existent domains. Giving a warning per chunk anyway, just in case.
-			if (! $ok) {
-				$joined = implode($chunk, "\n");
-				WP_CLI::warning("Chunk $i failed, one or more of these didn't work out: \n$joined");
+			if ($ok) {
+				continue;
 			}
+
+			$joined = implode($chunk, "\n");
+			WP_CLI::warning("Chunk $i failed, one or more of these didn't work out: \n$joined");
 		}
+	}
+
+	/**
+	 * The name to access the command.
+	 *
+	 * @return string The command name.
+	 */
+	protected static function get_name(): string
+	{
+		return 'p4-cf-purge';
+	}
+
+	/**
+	 * The description shown in the argument's help.
+	 *
+	 * @return string The description text.
+	 */
+	protected static function get_short_description(): string
+	{
+		return 'Purge urls from Cloudflare cache';
 	}
 
 	/**

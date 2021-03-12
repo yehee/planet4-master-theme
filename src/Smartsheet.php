@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use InvalidArgumentException;
@@ -68,7 +70,6 @@ final class Smartsheet
 		return new self($this->columns, $rows);
 	}
 
-
 	/**
 	 * Sort the rows by a column.
 	 *
@@ -93,7 +94,7 @@ final class Smartsheet
 	 *
 	 * @param int $column_index The index of the column to get values from.
 	 *
-	 * @return mixed[] The values in that column.
+	 * @return array<mixed> The values in that column.
 	 */
 	public function get_column_values(int $column_index): array
 	{

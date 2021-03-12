@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\ImageArchive;
 
 use P4\MasterTheme\Exception\RemoteCallFailed;
@@ -97,55 +99,11 @@ class ApiClient
 	}
 
 	/**
-	 * Call the authentication endpoint with credentials to fetch a token.
-	 *
-	 * @param string $username The username of the API account.
-	 * @param string $password The password of the API account.
-	 *
-	 * @return string The authentication token.
-	 * @throws RemoteCallFailed Authentication failed.
-	 */
-	private static function fetch_token(string $username, string $password): string
-	{
-		$response = wp_safe_remote_post(
-			self::AUTH_URL,
-			[
-				'body'    => [
-					'Login'    => $username,
-					'Password' => $password,
-					'format'   => 'json',
-				],
-				'timeout' => self::RESPONSE_TIMEOUT,
-			]
-		);
-		// Authentication failure.
-		if (is_wp_error($response)) {
-			$response = $response->get_error_message() . ' ' . $response->get_error_code();
-		} elseif (WP_Http::ACCEPTED !== $response['response']['code']) {
-			$response = $response['response']['message'] . ' ' . $response['response']['code'];
-		}
-
-		if (! is_array($response) || empty($response['body'])) {
-			throw new RemoteCallFailed("Unable to authenticate user {$username}");
-		}
-		// Communication with ML API is authenticated.
-		$body  = json_decode($response['body'], true);
-		$token = $body['APIResponse']['Token'];
-
-		// Time period in seconds to keep the ml_auth_token before refreshing. Typically 1 hour.
-		$expiration_seconds = ( $body['APIResponse']['TimeoutPeriodMinutes'] ?? 60 ) * 60;
-
-		set_transient(self::TOKEN_CACHE_KEY, $token, $expiration_seconds);
-
-		return $token;
-	}
-
-	/**
 	 * Call the API to get specific images.
 	 *
 	 * @param array $ids The ids of the desired images.
 	 *
-	 * @return Image[]|null Data for these images.
+	 * @return array<Image>|null Data for these images.
 	 * @throws RemoteCallFailed Failed to fetch images.
 	 */
 	public function get_selection(array $ids): ?array
@@ -162,7 +120,7 @@ class ApiClient
 	 *
 	 * @param array $additional_params Supplement or override default parameters.
 	 *
-	 * @return Image[]|null The matching images.
+	 * @return array<Image>|null The matching images.
 	 * @throws RemoteCallFailed Failed to fetch images.
 	 */
 	public function fetch_images(array $additional_params = []): ?array
@@ -214,7 +172,6 @@ class ApiClient
 		return $response['APIResponse']['Metadata'];
 	}
 
-
 	/**
 	 * List criteria that can be used in API queries.
 	 *
@@ -235,13 +192,68 @@ class ApiClient
 
 		return $response['APIResponse'];
 	}
+
+	/**
+	 * Get the token with the right array key.
+	 *
+	 * @return array<string> Array with the token key and value.
+	 */
+	private function token_param(): array
+	{
+		return [ 'token' => $this->token ];
+	}
+
+	/**
+	 * Call the authentication endpoint with credentials to fetch a token.
+	 *
+	 * @param string $username The username of the API account.
+	 * @param string $password The password of the API account.
+	 *
+	 * @return string The authentication token.
+	 * @throws RemoteCallFailed Authentication failed.
+	 */
+	private static function fetch_token(string $username, string $password): string
+	{
+		$response = wp_safe_remote_post(
+			self::AUTH_URL,
+			[
+				'body'    => [
+					'Login'    => $username,
+					'Password' => $password,
+					'format'   => 'json',
+				],
+				'timeout' => self::RESPONSE_TIMEOUT,
+			]
+		);
+		// Authentication failure.
+		if (is_wp_error($response)) {
+			$response = $response->get_error_message() . ' ' . $response->get_error_code();
+		} elseif (WP_Http::ACCEPTED !== $response['response']['code']) {
+			$response = $response['response']['message'] . ' ' . $response['response']['code'];
+		}
+
+		if (! is_array($response) || empty($response['body'])) {
+			throw new RemoteCallFailed("Unable to authenticate user {$username}");
+		}
+		// Communication with ML API is authenticated.
+		$body  = json_decode($response['body'], true);
+		$token = $body['APIResponse']['Token'];
+
+		// Time period in seconds to keep the ml_auth_token before refreshing. Typically 1 hour.
+		$expiration_seconds = ( $body['APIResponse']['TimeoutPeriodMinutes'] ?? 60 ) * 60;
+
+		set_transient(self::TOKEN_CACHE_KEY, $token, $expiration_seconds);
+
+		return $token;
+	}
+
 	/**
 	 * Get the ids from the api response so we can know which ones are already in WP before creating the Image
 	 * representation. That way we don't need to execute a query for each image.
 	 *
 	 * @param array $api_data The API data from which we extract the identifiers.
 	 *
-	 * @return string[] Indexed array with the WordPress ID of all images that are in WordPress
+	 * @return array<string> Indexed array with the WordPress ID of all images that are in WordPress
 	 */
 	private static function get_images_in_wordpress(array $api_data): array
 	{
@@ -271,15 +283,5 @@ WHERE m.meta_key = "' . Image::ARCHIVE_ID_META_KEY . '" AND m.meta_value IN (' .
 		}
 
 		return $indexed;
-	}
-
-	/**
-	 * Get the token with the right array key.
-	 *
-	 * @return string[] Array with the token key and value.
-	 */
-	private function token_param(): array
-	{
-		return [ 'token' => $this->token ];
 	}
 }

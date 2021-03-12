@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Commands.
  */
@@ -18,7 +20,7 @@ class Commands
 	/**
 	 * Add some WP_CLI commands if we're in CLI.
 	 */
-	public static function load()
+	public static function load(): void
 	{
 		if (! defined('WP_CLI') || ! WP_CLI) {
 			return;

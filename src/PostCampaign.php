@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class PostCampaign
 {
-
 	/**
 	 * Post Type
 	 */
@@ -40,20 +41,6 @@ class PostCampaign
 	}
 
 	/**
-	 * Class hooks.
-	 */
-	private function hooks()
-	{
-		add_action('init', [ $this, 'register_campaigns_cpt' ]);
-		add_action('cmb2_admin_init', [ $this, 'register_campaigns_metaboxes' ]);
-		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ]);
-		add_action('cmb2_render_sidebar_link', [ $this, 'cmb2_render_sidebar_link_field_callback' ], 10, 5);
-		add_action('cmb2_render_footer_icon_link', [ $this, 'cmb2_render_footer_icon_link_field_callback' ], 10, 5);
-
-		add_filter('get_user_option_edit_campaign_per_page', [ $this, 'set_default_items_per_page' ], 10, 3);
-	}
-
-	/**
 	 * Increase the maximum number of items displayed so that there are enough items to collapse any child pages.
 	 *
 	 * @param int|null $result Possibly value chosen by the current user.
@@ -62,7 +49,7 @@ class PostCampaign
 	 *
 	 * @return int The amount of pages that will be used.
 	 */
-	public function set_default_items_per_page($result, $option, $user)
+	public function set_default_items_per_page(?int $result, string $option, object $user): int
 	{
 		if ((int) $result < 1) {
 			return 200;
@@ -74,7 +61,7 @@ class PostCampaign
 	/**
 	 * Register campaigns cpt
 	 */
-	public function register_campaigns_cpt()
+	public function register_campaigns_cpt(): void
 	{
 
 		$labels = [
@@ -137,7 +124,7 @@ class PostCampaign
 	/**
 	 * Register Color Picker Metabox for navigation
 	 */
-	public function register_campaigns_metaboxes()
+	public function register_campaigns_metaboxes(): void
 	{
 		$cmb = new_cmb2_box(
 			[
@@ -203,7 +190,7 @@ class PostCampaign
 	/**
 	 * Load assets.
 	 */
-	public function enqueue_admin_assets()
+	public function enqueue_admin_assets(): void
 	{
 		wp_register_style(
 			'cmb-style',
@@ -224,12 +211,12 @@ class PostCampaign
 	 * @param array $field_type Instance of the `cmb2_Meta_Box_types` object.
 	 */
 	public function cmb2_render_sidebar_link_field_callback(
-		$field,
-		$value,
-		$object_id,
-		$object_type,
-		$field_type
-	) {
+		array $field,
+		array $value,
+		array $object_id,
+		array $object_type,
+		array $field_type
+	): void {
 		?>
 		<a
 			href="#" onclick="openSidebar()"
@@ -258,7 +245,7 @@ class PostCampaign
 	 * @param array $object_type The type of object.
 	 * @param array $field_type Instance of the `cmb2_Meta_Box_types` object.
 	 */
-	public function cmb2_render_footer_icon_link_field_callback($field, $value, $object_id, $object_type, $field_type)
+	public function cmb2_render_footer_icon_link_field_callback(array $field, array $value, array $object_id, array $object_type, array $field_type): void
 	{
 		$value = wp_parse_args(
 			$value,
@@ -327,66 +314,6 @@ class PostCampaign
 	}
 
 	/**
-	 * Register a key as a post_meta with the argument `show_in_rest` that is needed on all fields so they can be
-	 * used through the REST api. Also set `type` and `single` as both are the same for all attributes.
-	 *
-	 * @param string $meta_key Identifier the post_meta field will be registered with.
-	 * @param array  $args Arguments which are passed on to register_post_meta.
-	 *
-	 * @return void A description of the field.
-	 */
-	private static function campaign_field(
-		string $meta_key,
-		array $args = []
-	): void {
-		$args = array_merge(
-			[
-				'show_in_rest' => true,
-				'type'         => 'string',
-				'single'       => true,
-			],
-			$args
-		);
-		register_post_meta(self::POST_TYPE, $meta_key, $args);
-	}
-
-	/**
-	 * Gets the default for a field.
-	 *
-	 * @param array $field A field from the JSON theme file.
-	 * @return string Default value
-	 */
-	private static function get_field_default($field)
-	{
-		$default = null;
-		if (isset($field['configurations']) && isset($field['configurations']['default'])) {
-			$default_configuration = $field['configurations']['default'];
-			if (isset($field['configurations'][ $default_configuration ]['default'])) {
-				$default = $field['configurations'][ $default_configuration ]['default'];
-			}
-		} elseif (isset($field['default'])) {
-			$default = $field['default'];
-		}
-
-		return $default;
-	}
-
-	/**
-	 * Get the theme defaults
-	 *
-	 * @param mixed $theme_json The JSON theme file.
-	 */
-	private static function get_theme_defaults($theme_json)
-	{
-		$defaults = [];
-		foreach ($theme_json['fields'] as $field) {
-			$defaults[ $field['id'] ] = self::get_field_default($field);
-		}
-
-		return $defaults;
-	}
-
-	/**
 	 * Determine the css variables for a certain post.
 	 *
 	 * @param array $meta The meta containing the variable values.
@@ -428,7 +355,7 @@ class PostCampaign
 	 * @param array $meta The meta containing the style settings.
 	 * @return string The body font.
 	 */
-	public static function get_body_font($css_vars, $meta): array
+	public static function get_body_font(array $css_vars, array $meta): array
 	{
 		// Temporary fix for old campaigns having "campaign_body_font" as a "campaign".
 		if (isset($css_vars['campaign_body_font']) && 'campaign' === $css_vars['campaign_body_font']) {
@@ -589,5 +516,79 @@ class PostCampaign
 		}
 
 		return $logo ? $logo : 'greenpeace';
+	}
+
+	/**
+	 * Class hooks.
+	 */
+	private function hooks(): void
+	{
+		add_action('init', [ $this, 'register_campaigns_cpt' ]);
+		add_action('cmb2_admin_init', [ $this, 'register_campaigns_metaboxes' ]);
+		add_action('admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ]);
+		add_action('cmb2_render_sidebar_link', [ $this, 'cmb2_render_sidebar_link_field_callback' ], 10, 5);
+		add_action('cmb2_render_footer_icon_link', [ $this, 'cmb2_render_footer_icon_link_field_callback' ], 10, 5);
+
+		add_filter('get_user_option_edit_campaign_per_page', [ $this, 'set_default_items_per_page' ], 10, 3);
+	}
+
+	/**
+	 * Register a key as a post_meta with the argument `show_in_rest` that is needed on all fields so they can be
+	 * used through the REST api. Also set `type` and `single` as both are the same for all attributes.
+	 *
+	 * @param string $meta_key Identifier the post_meta field will be registered with.
+	 * @param array  $args Arguments which are passed on to register_post_meta.
+	 *
+	 * @return void A description of the field.
+	 */
+	private static function campaign_field(
+		string $meta_key,
+		array $args = []
+	): void {
+		$args = array_merge(
+			[
+				'show_in_rest' => true,
+				'type'         => 'string',
+				'single'       => true,
+			],
+			$args
+		);
+		register_post_meta(self::POST_TYPE, $meta_key, $args);
+	}
+
+	/**
+	 * Gets the default for a field.
+	 *
+	 * @param array $field A field from the JSON theme file.
+	 * @return string Default value
+	 */
+	private static function get_field_default(array $field): string
+	{
+		$default = null;
+		if (isset($field['configurations']) && isset($field['configurations']['default'])) {
+			$default_configuration = $field['configurations']['default'];
+			if (isset($field['configurations'][ $default_configuration ]['default'])) {
+				$default = $field['configurations'][ $default_configuration ]['default'];
+			}
+		} elseif (isset($field['default'])) {
+			$default = $field['default'];
+		}
+
+		return $default;
+	}
+
+	/**
+	 * Get the theme defaults
+	 *
+	 * @param mixed $theme_json The JSON theme file.
+	 */
+	private static function get_theme_defaults($theme_json)
+	{
+		$defaults = [];
+		foreach ($theme_json['fields'] as $field) {
+			$defaults[ $field['id'] ] = self::get_field_default($field);
+		}
+
+		return $defaults;
 	}
 }

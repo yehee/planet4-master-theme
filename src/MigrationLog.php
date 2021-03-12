@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -13,7 +15,7 @@ class MigrationLog
 	private const OPTION_KEY = 'planet4_migrations';
 
 	/**
-	 * @var array[] An entry for each done migration.
+	 * @var array<array> An entry for each done migration.
 	 */
 	private $done_migrations;
 

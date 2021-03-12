@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use P4\MasterTheme\Migrations\M001EnableEnFormFeature;
@@ -10,7 +12,6 @@ use P4\MasterTheme\Migrations\M002EnableLazyYoutube;
  */
 class Migrator
 {
-
 	/**
 	 * Run any new migration scripts and record results in the log.
 	 */
@@ -21,7 +22,7 @@ class Migrator
 		$log = MigrationLog::from_wp_options();
 
 		/**
-		 * @var MigrationScript[] $scripts
+		 * @var array<MigrationScript> $scripts
 		 */
 		$scripts = [
 			M001EnableEnFormFeature::class,

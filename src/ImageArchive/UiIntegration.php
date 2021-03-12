@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\ImageArchive;
 
 use P4\MasterTheme\Capability;
@@ -18,18 +20,6 @@ class UiIntegration
 	public function __construct()
 	{
 		self::hooks();
-	}
-
-	/**
-	 * Hook up to WordPress.
-	 */
-	private static function hooks()
-	{
-		if (! Features::is_active(Features::IMAGE_ARCHIVE)) {
-			return;
-		}
-		add_action('admin_menu', [ self::class, 'picker_page' ], 10);
-		add_action('admin_menu', [ self::class, 'media_api_info_page' ], 20);
 	}
 
 	/**
@@ -101,7 +91,7 @@ class UiIntegration
 	{
 		Loader::enqueue_versioned_style('/admin/css/media-api-info.css');
 
-		//phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
+        //phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 		try {
 			$client   = ApiClient::from_cache_or_credentials();
 			$fields   = $client->show_fields();
@@ -139,6 +129,18 @@ class UiIntegration
 			echo '</dd>';
 		}
 		echo '</dl>';
-		//phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
+        //phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
+	}
+
+	/**
+	 * Hook up to WordPress.
+	 */
+	private static function hooks(): void
+	{
+		if (! Features::is_active(Features::IMAGE_ARCHIVE)) {
+			return;
+		}
+		add_action('admin_menu', [ self::class, 'picker_page' ], 10);
+		add_action('admin_menu', [ self::class, 'media_api_info_page' ], 20);
 	}
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class PostArchive
 {
-
 	public const POST_TYPE = 'archive';
 
 	/**
@@ -19,18 +20,9 @@ class PostArchive
 	}
 
 	/**
-	 * Class hooks.
-	 */
-	private function hooks()
-	{
-		add_action('init', [ $this, 'register_archive_cpt' ]);
-		add_action('add_meta_boxes_archive', [ $this, 'add_archive_link' ]);
-	}
-
-	/**
 	 * Register the custom post type.
 	 */
-	public function register_archive_cpt()
+	public function register_archive_cpt(): void
 	{
 		$args = [
 			'labels'             => [
@@ -74,17 +66,26 @@ class PostArchive
 	/**
 	 * Add a link to the internet archive page.
 	 */
-	public function add_archive_link()
+	public function add_archive_link(): void
 	{
 		add_meta_box(
 			'archive-url',
 			__('Archive URL', 'planet4-master-theme'),
-			function ($post) {
+			function ($post): void {
 				echo "<a target=\"_blank\" href=\"{$post->guid}\">{$post->guid}</a>"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			},
 			null,
 			'side',
 			'high'
 		);
+	}
+
+	/**
+	 * Class hooks.
+	 */
+	private function hooks(): void
+	{
+		add_action('init', [ $this, 'register_archive_cpt' ]);
+		add_action('add_meta_boxes_archive', [ $this, 'add_archive_link' ]);
 	}
 }

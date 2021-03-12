@@ -1,8 +1,8 @@
 <?php
 
-namespace P4\MasterTheme;
+declare(strict_types=1);
 
-use WP_Post;
+namespace P4\MasterTheme;
 
 /**
  * Class CampaignExporter.
@@ -25,7 +25,7 @@ class CampaignExporter
 	/**
 	 * Main function
 	 */
-	public function single_post_export_data()
+	public function single_post_export_data(): void
 	{
 		$post_id = filter_input(INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT) ?? filter_input(INPUT_POST, 'post', FILTER_SANITIZE_NUMBER_INT);
 		if (! empty($post_id) && 'export_data' === filter_input(INPUT_GET, 'action', FILTER_SANITIZE_STRING)) {
@@ -38,19 +38,21 @@ class CampaignExporter
 	/**
 	 * Export multiple data
 	 */
-	public function single_post_export_bulk()
+	public function single_post_export_bulk(): void
 	{
 		if (
-			PostCampaign::POST_TYPE === filter_input(INPUT_GET, 'post_type', FILTER_SANITIZE_STRING) &&
-			current_user_can('edit_posts')
-		) { ?>
-		<script type="text/javascript">
-			jQuery(function ($) {
-				jQuery('<option>').val('export').text('<?php esc_html_e('Export', 'planet4-master-theme-backend'); ?>').appendTo("select[name='action']");
-			});
-		</script>
-			<?php
+			PostCampaign::POST_TYPE !== filter_input(INPUT_GET, 'post_type', FILTER_SANITIZE_STRING) ||
+			!current_user_can('edit_posts')
+		) {
+			return;
 		}
+		?>
+	<script type="text/javascript">
+		jQuery(function ($) {
+			jQuery('<option>').val('export').text('<?php esc_html_e('Export', 'planet4-master-theme-backend'); ?>').appendTo("select[name='action']");
+		});
+	</script>
+		<?php
 	}
 
 	/**
@@ -91,7 +93,7 @@ class CampaignExporter
 	 * @param WP_Post $post object.
 	 * @return array  $actions array.
 	 */
-	public function single_post_export($actions, $post): array
+	public function single_post_export(array $actions, WP_Post $post): array
 	{
 		if (
 			PostCampaign::POST_TYPE === filter_input(INPUT_GET, 'post_type', FILTER_SANITIZE_STRING) &&
@@ -107,7 +109,7 @@ class CampaignExporter
 	/**
 	 * Add Import Button
 	 */
-	public function add_import_button()
+	public function add_import_button(): void
 	{
 		// phpcs:disable WordPress.WP.CapitalPDangit.Misspelled
 		?>

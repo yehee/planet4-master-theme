@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,10 +9,6 @@ namespace P4\MasterTheme;
  */
 class Features
 {
-
-	/**
-	 * @var string Media library refactored feature.
-	 */
 	public const IMAGE_ARCHIVE = 'feature_image_archive';
 
 	public const ENGAGING_NETWORKS = 'feature_engaging_networks';
@@ -34,16 +32,30 @@ class Features
 		return [
 			'title'       => 'Features',
 			'fields'      => self::get_fields(),
-			'add_scripts' => static function () {
+			'add_scripts' => static function (): void {
 				Loader::enqueue_versioned_script('/admin/js/features_save_redirect.js');
 			},
 		];
 	}
 
 	/**
+	 * Check whether a feature is active.
+	 *
+	 * @param string $name The name of the feature we're checking.
+	 *
+	 * @return bool Whether the feature is active.
+	 */
+	public static function is_active(string $name): bool
+	{
+		$features = get_option(Settings::KEY);
+
+		return isset($features[ $name ]) && $features[ $name ];
+	}
+
+	/**
 	 * Get the fields for each feature.
 	 *
-	 * @return array[] The fields for each feature.
+	 * @return array<array> The fields for each feature.
 	 */
 	private static function get_fields(): array
 	{
@@ -108,19 +120,5 @@ class Features
 		}
 
 		return $fields;
-	}
-
-	/**
-	 * Check whether a feature is active.
-	 *
-	 * @param string $name The name of the feature we're checking.
-	 *
-	 * @return bool Whether the feature is active.
-	 */
-	public static function is_active(string $name): bool
-	{
-		$features = get_option(Settings::KEY);
-
-		return isset($features[ $name ]) && $features[ $name ];
 	}
 }

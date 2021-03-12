@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use UnexpectedValueException;
@@ -9,7 +11,6 @@ use UnexpectedValueException;
  */
 class ElasticSearch extends Search
 {
-
 	/**
 	 * Applies user selected filters to the search if there are any and gets the filtered posts.
 	 *
@@ -17,70 +18,72 @@ class ElasticSearch extends Search
 	 *
 	 * @throws UnexpectedValueException When filter type is not recognized.
 	 */
-	public function set_filters_args(&$args)
+	public function set_filters_args(array &$args): void
 	{
 		parent::set_filters_args($args);
 
-		if ($this->filters) {
-			foreach ($this->filters as $type => $filter_type) {
-				foreach ($filter_type as $filter) {
-					switch ($type) {
-						case 'cat':
-						case 'tag':
-						case 'ptype':
-							break;
-						case 'ctype':
-							switch ($filter['id']) {
-								case 0:
-								case 1:
-									break;
-								case 2:
-									// Workaround for making 'post_parent__not_in' to work with ES.
-									add_filter(
-										'ep_formatted_args',
-										function ($formatted_args) use ($args) {
-											// Make sure it is not an Action page.
-											if (! empty($args['post_parent__not_in'])) {
-												$formatted_args['post_filter']['bool']['must_not'][] = [
-													'terms' => [
-														'post_parent' => array_values((array) $args['post_parent__not_in']),
-													],
-												];
-											}
-											return $formatted_args;
-										},
-										10,
-										1
-									);
-									break;
-								case 3:
-								case 4:
-									add_filter(
-										'ep_formatted_args',
-										function ($formatted_args) use ($args) {
-											// Make sure it is a Post.
-											if (! empty($args['post_type'])) {
-												$formatted_args['post_filter']['bool']['must'][] = [
-													'terms' => [
-														'post_type' => array_values((array) $args['post_type']),
-													],
-												];
-											}
-											return $formatted_args;
-										},
-										10,
-										1
-									);
-									break;
-								case 5:
-									break;
-								default:
-									throw new UnexpectedValueException('Unexpected content type!');
-							}
-							break;
-						default:
-							throw new UnexpectedValueException('Unexpected filter!');
-					}
+		if (!$this->filters) {
+			return;
+		}
+
+		foreach ($this->filters as $type => $filter_type) {
+			foreach ($filter_type as $filter) {
+				switch ($type) {
+					case 'cat':
+					case 'tag':
+					case 'ptype':
+						break;
+					case 'ctype':
+						switch ($filter['id']) {
+							case 0:
+							case 1:
+								break;
+							case 2:
+								// Workaround for making 'post_parent__not_in' to work with ES.
+								add_filter(
+									'ep_formatted_args',
+									function ($formatted_args) use ($args) {
+										// Make sure it is not an Action page.
+										if (! empty($args['post_parent__not_in'])) {
+											$formatted_args['post_filter']['bool']['must_not'][] = [
+												'terms' => [
+													'post_parent' => array_values((array) $args['post_parent__not_in']),
+												],
+											];
+										}
+										return $formatted_args;
+									},
+									10,
+									1
+								);
+								break;
+							case 3:
+							case 4:
+								add_filter(
+									'ep_formatted_args',
+									function ($formatted_args) use ($args) {
+										// Make sure it is a Post.
+										if (! empty($args['post_type'])) {
+											$formatted_args['post_filter']['bool']['must'][] = [
+												'terms' => [
+													'post_type' => array_values((array) $args['post_type']),
+												],
+											];
+										}
+										return $formatted_args;
+									},
+									10,
+									1
+								);
+								break;
+							case 5:
+								break;
+							default:
+								throw new UnexpectedValueException('Unexpected content type!');
+						}
+						break;
+					default:
+						throw new UnexpectedValueException('Unexpected filter!');
 				}
 			}
 		}
@@ -91,7 +94,7 @@ class ElasticSearch extends Search
 	 *
 	 * @param array $args The array with the arguments that will be passed to WP_Query.
 	 */
-	public function set_engines_args(&$args)
+	public function set_engines_args(array &$args): void
 	{
 		$args['ep_integrate'] = true;
 		simple_value_filter('epwr_scale', planet4_get_option('epwr_scale', '28d'));
@@ -103,9 +106,11 @@ class ElasticSearch extends Search
 
 		add_filter('ep_formatted_args', [ $this, 'add_mime_type_filter' ], 21, 1);
 
-		if (! wp_doing_ajax()) {
-			add_filter('ep_formatted_args', [ $this, 'add_aggregations' ], 999, 1);
+		if (wp_doing_ajax()) {
+			return;
 		}
+
+		add_filter('ep_formatted_args', [ $this, 'add_aggregations' ], 999, 1);
 	}
 
 	/**
@@ -189,7 +194,7 @@ class ElasticSearch extends Search
 	 * @param  array $formatted_args The query that is going to ES.
 	 * @return array The same query, but with added aggregations.
 	 */
-	public function add_aggregations($formatted_args)
+	public function add_aggregations(array $formatted_args): array
 	{
 		$formatted_args['aggs'] = [
 			'with_post_filter' => [
@@ -233,7 +238,7 @@ class ElasticSearch extends Search
 	 * @param array $formatted_args The args that are going to ES.
 	 * @return array Same args with added filter.
 	 */
-	public function add_mime_type_filter($formatted_args)
+	public function add_mime_type_filter(array $formatted_args): array
 	{
 
 		$formatted_args['post_filter']['bool']['must'][] = [

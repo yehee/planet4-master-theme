@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,10 +9,6 @@ namespace P4\MasterTheme;
  */
 class Campaigner
 {
-
-	/**
-	 * @var [[string]] List of capabilities for each standard WordPress role.
-	 */
 	private const CAPABILITIES_MAP = [
 		'administrator' => [
 			'edit_campaign',
@@ -64,9 +62,23 @@ class Campaigner
 	];
 
 	/**
+	 * Register campaigner role and add custom capabilities.
+	 */
+	public static function register_role_and_add_capabilities(): void
+	{
+		foreach (self::CAPABILITIES_MAP as $role_name => $capabilities) {
+			$role = get_role($role_name);
+			foreach ($capabilities as $capability) {
+				$role->add_cap($capability);
+			}
+		}
+		self::add_campaigner_role();
+	}
+
+	/**
 	 * Add Campaigner role.
 	 */
-	private static function add_campaigner_role()
+	private static function add_campaigner_role(): void
 	{
 		add_role(
 			'campaigner',
@@ -101,19 +113,5 @@ class Campaigner
 				'import'                     => true,
 			]
 		);
-	}
-
-	/**
-	 * Register campaigner role and add custom capabilities.
-	 */
-	public static function register_role_and_add_capabilities()
-	{
-		foreach (self::CAPABILITIES_MAP as $role_name => $capabilities) {
-			$role = get_role($role_name);
-			foreach ($capabilities as $capability) {
-				$role->add_cap($capability);
-			}
-		}
-		self::add_campaigner_role();
 	}
 }

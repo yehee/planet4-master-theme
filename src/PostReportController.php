@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -7,7 +9,6 @@ namespace P4\MasterTheme;
  */
 class PostReportController
 {
-
 	/**
 	 * Theme directory
 	 *
@@ -25,18 +26,6 @@ class PostReportController
 	}
 
 	/**
-	 * Register actions for WordPress hooks and filters.
-	 */
-	private function hooks()
-	{
-		add_action('admin_menu', [ $this, 'add_posts_report_admin_menu_item' ]);
-		add_filter('rest_post_query', [ $this, 'add_posts_param_to_endpoint' ], 10, 2);
-		add_filter('rest_page_query', [ $this, 'add_posts_param_to_endpoint' ], 10, 2);
-		add_filter('rest_post_collection_params', [ $this, 'filter_post_params_endpoint' ]);
-		add_filter('rest_page_collection_params', [ $this, 'filter_post_params_endpoint' ]);
-	}
-
-	/**
 	 * Add extra date column in post rest endpoint.
 	 *
 	 * @param array $args Arguments array passed to endpoint.
@@ -44,7 +33,7 @@ class PostReportController
 	 *
 	 * @return mixed
 	 */
-	public function add_posts_param_to_endpoint($args, $request)
+	public function add_posts_param_to_endpoint(array $args, array $request)
 	{
 		if (! isset($request['before']) && ! isset($request['after'])) {
 			return $args;
@@ -60,7 +49,7 @@ class PostReportController
 	/**
 	 * Add post report submenu item.
 	 */
-	public function add_posts_report_admin_menu_item()
+	public function add_posts_report_admin_menu_item(): void
 	{
 		add_posts_page(
 			__('Posts Report', 'planet4-master-theme-backend'),
@@ -78,7 +67,7 @@ class PostReportController
 	 *
 	 * @return mixed
 	 */
-	public function filter_post_params_endpoint($query_params)
+	public function filter_post_params_endpoint(array $query_params)
 	{
 		$query_params['date_query_column'] = [
 			'description' => __('The date query column.', 'planet4-master-theme-backend'),
@@ -92,7 +81,7 @@ class PostReportController
 	/**
 	 * Callback function to render posts report page.
 	 */
-	public function render_posts_report_page()
+	public function render_posts_report_page(): void
 	{
 		wp_enqueue_script('jquery-ui-core');
 		wp_register_script(
@@ -116,5 +105,17 @@ class PostReportController
 		);
 		wp_enqueue_script('posts-report');
 		include dirname(__FILE__) . '/../posts-report.php';
+	}
+
+	/**
+	 * Register actions for WordPress hooks and filters.
+	 */
+	private function hooks(): void
+	{
+		add_action('admin_menu', [ $this, 'add_posts_report_admin_menu_item' ]);
+		add_filter('rest_post_query', [ $this, 'add_posts_param_to_endpoint' ], 10, 2);
+		add_filter('rest_page_query', [ $this, 'add_posts_param_to_endpoint' ], 10, 2);
+		add_filter('rest_post_collection_params', [ $this, 'filter_post_params_endpoint' ]);
+		add_filter('rest_page_collection_params', [ $this, 'filter_post_params_endpoint' ]);
 	}
 }

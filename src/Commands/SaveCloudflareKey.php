@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme\Commands;
 
 use WP_CLI;
@@ -9,27 +11,6 @@ use WP_CLI;
  */
 class SaveCloudflareKey extends Command
 {
-
-	/**
-	 * The name to access the command.
-	 *
-	 * @return string The command name.
-	 */
-	protected static function get_name(): string
-	{
-		return 'p4-cf-key-in-db';
-	}
-
-	/**
-	 * The description shown in the argument's help.
-	 *
-	 * @return string The description text.
-	 */
-	protected static function get_short_description(): string
-	{
-		return 'Put Cloudflare key in DB from config file';
-	}
-
 	/**
 	 * The logic of the command. Has WP_CLI command signature.
 	 *
@@ -55,5 +36,25 @@ class SaveCloudflareKey extends Command
 		update_option('cloudflare_api_key', CLOUDFLARE_API_KEY);
 		update_option('automatic_platform_optimization', [ 'value' => 1 ]);
 		update_option('cloudflare_cached_domain_name', $root_domain);
+	}
+
+	/**
+	 * The name to access the command.
+	 *
+	 * @return string The command name.
+	 */
+	protected static function get_name(): string
+	{
+		return 'p4-cf-key-in-db';
+	}
+
+	/**
+	 * The description shown in the argument's help.
+	 *
+	 * @return string The description text.
+	 */
+	protected static function get_short_description(): string
+	{
+		return 'Put Cloudflare key in DB from config file';
 	}
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 use P4\MasterTheme\Exception\SqlInIsEmpty;
@@ -18,7 +20,7 @@ use P4\MasterTheme\Exception\SqlInIsEmpty;
 class SqlParameters
 {
 	/**
-	 * @var mixed[] The values of the parameters in the order they were added.
+	 * @var array<mixed> The values of the parameters in the order they were added.
 	 */
 	private $values = [];
 
@@ -73,7 +75,7 @@ class SqlParameters
 	/**
 	 * Add int parameters for an IN query.
 	 *
-	 * @param int[] $values The values for the IN statement.
+	 * @param array<int> $values The values for the IN statement.
 	 *
 	 * @return string Concatenated numbered placeholders.
 	 * @throws SqlInIsEmpty If $values is an empty array.
@@ -96,7 +98,7 @@ class SqlParameters
 	/**
 	 * Add string parameters for an IN query.
 	 *
-	 * @param string[] $values The values for the IN statement.
+	 * @param array<string> $values The values for the IN statement.
 	 *
 	 * @return string Concatenated numbered placeholders.
 	 * @throws SqlInIsEmpty If $values is an empty array.
@@ -119,7 +121,7 @@ class SqlParameters
 	/**
 	 * Get all values in the order they were added.
 	 *
-	 * @return mixed[] All values.
+	 * @return array<mixed> All values.
 	 */
 	public function get_values(): array
 	{

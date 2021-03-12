@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace P4\MasterTheme;
 
 /**
@@ -10,20 +12,20 @@ final class AnalyticsValues
 	private const CACHE_KEY = 'analytics_global_projects';
 
 	/**
-	 * @var string[] List of global projects.
+	 * @var array<string> List of global projects.
 	 */
 	private $global_projects;
 
 	/**
-	 * @var string[] List of local projects.
+	 * @var array<string> List of local projects.
 	 */
 	private $local_projects;
 
 	/**
 	 * AnalyticsValues constructor.
 	 *
-	 * @param string[]      $global_projects A list of the global projects.
-	 * @param string[]|null $local_projects A list of the local projects.
+	 * @param array<string> $global_projects A list of the global projects.
+	 * @param array<string>|null $local_projects A list of the local projects.
 	 */
 	private function __construct(array $global_projects, ?array $local_projects = null)
 	{
@@ -39,10 +41,8 @@ final class AnalyticsValues
 	 *
 	 * @return static
 	 */
-	public static function from_smartsheets(
-		Smartsheet $global_smartsheet,
-		Smartsheet $local_smartsheet = null
-	): self {
+	public static function from_smartsheets(Smartsheet $global_smartsheet, ?Smartsheet $local_smartsheet = null): self
+	{
 		$project_name_column = $global_smartsheet->get_column_index('Global Project Standard');
 		$approved_column = $global_smartsheet->get_column_index('Standard Approved');
 		$tracking_id_column  = $global_smartsheet->get_column_index('Tracking ID');
@@ -81,19 +81,6 @@ final class AnalyticsValues
 	public static function from_cache_array(array $cache_array): self
 	{
 		return new self($cache_array['global_projects'], $cache_array['local_projects']);
-	}
-
-	/**
-	 * Export values to cache array.
-	 *
-	 * @return array The data for cache.
-	 */
-	public function to_cache_array(): array
-	{
-		return [
-			'global_projects' => $this->global_projects,
-			'local_projects'  => $this->local_projects,
-		];
 	}
 
 	/**
@@ -268,9 +255,22 @@ final class AnalyticsValues
 	}
 
 	/**
+	 * Export values to cache array.
+	 *
+	 * @return array The data for cache.
+	 */
+	public function to_cache_array(): array
+	{
+		return [
+			'global_projects' => $this->global_projects,
+			'local_projects'  => $this->local_projects,
+		];
+	}
+
+	/**
 	 * Get the global project options for the dropdown in the post editor.
 	 *
-	 * @return string[] The options.
+	 * @return array<string> The options.
 	 */
 	public function global_projects_options(): array
 	{
@@ -316,9 +316,11 @@ final class AnalyticsValues
 	{
 		$matching_project = null;
 		foreach ($this->global_projects as $global_project) {
-			if ($global_project['global_project_name'] === $global_project_name) {
-				$matching_project = $global_project;
+			if ($global_project['global_project_name'] !== $global_project_name) {
+				continue;
 			}
+
+			$matching_project = $global_project;
 		}
 		if (empty($matching_project)) {
 			return null;
