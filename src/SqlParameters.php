@@ -1,13 +1,8 @@
 <?php
 
-declare(strict_types= 1);
-
 namespace P4\MasterTheme;
 
 use P4\MasterTheme\Exception\SqlInIsEmpty;
-
-use function count;
-use function implode;
 
 /**
  * Holds the parameter values and returns a placeholder string while constructing a SQL statement with input.
@@ -22,9 +17,8 @@ use function implode;
  */
 class SqlParameters
 {
-
 	/**
-	 * @var array<mixed> The values of the parameters in the order they were added.
+	 * @var mixed[] The values of the parameters in the order they were added.
 	 */
 	private $values = [];
 
@@ -32,13 +26,14 @@ class SqlParameters
 	 * Add a parameter for a SQL identifier (mainly table but works for other things too).
 	 *
 	 * @param string $name The name of the object.
+	 *
 	 * @return string Numbered placeholder.
 	 */
 	public function identifier(string $name): string
 	{
 		$this->values[] = $name;
 
-		$n = \count($this->values);
+		$n = count($this->values);
 
 		return "`%$n\$s`";
 	}
@@ -47,6 +42,7 @@ class SqlParameters
 	 * Add a parameter for an integer.
 	 *
 	 * @param int $value The value the parameter has.
+	 *
 	 * @return string Numbered placeholder.
 	 */
 	public function int(int $value): string
@@ -62,6 +58,7 @@ class SqlParameters
 	 * Add a parameter for a string.
 	 *
 	 * @param string $value The value the parameter has.
+	 *
 	 * @return string Numbered placeholder.
 	 */
 	public function string(string $value): string
@@ -76,44 +73,42 @@ class SqlParameters
 	/**
 	 * Add int parameters for an IN query.
 	 *
-	 * @param array<int> $values The values for the IN statement.
+	 * @param int[] $values The values for the IN statement.
+	 *
 	 * @return string Concatenated numbered placeholders.
-	 * @throws \P4\MasterTheme\Exception\SqlInIsEmpty If $values is an empty array.
+	 * @throws SqlInIsEmpty If $values is an empty array.
 	 */
 	public function int_list(array $values): string
 	{
 		if (empty($values)) {
 			throw new SqlInIsEmpty(
-				'An IN query does not work if there are no values, please check before passing as an argument.',
+				'An IN query does not work if there are no values, please check before passing as an argument.'
 			);
 		}
-
 		$params = [];
-
 		foreach ($values as $value) {
 			$params[] = $this->int($value);
 		}
 
-		return ' (' . \implode(',', $params) . ') ';
+		return ' (' . implode(',', $params) . ') ';
 	}
 
 	/**
 	 * Add string parameters for an IN query.
 	 *
-	 * @param array<string> $values The values for the IN statement.
+	 * @param string[] $values The values for the IN statement.
+	 *
 	 * @return string Concatenated numbered placeholders.
-	 * @throws \P4\MasterTheme\Exception\SqlInIsEmpty If $values is an empty array.
+	 * @throws SqlInIsEmpty If $values is an empty array.
 	 */
 	public function string_list(array $values): string
 	{
 		if (empty($values)) {
 			throw new SqlInIsEmpty(
-				'An IN query does not work if there are no values, please check before passing as an argument.',
+				'An IN query does not work if there are no values, please check before passing as an argument.'
 			);
 		}
-
 		$params = [];
-
 		foreach ($values as $value) {
 			$params[] = $this->string($value);
 		}
@@ -124,7 +119,7 @@ class SqlParameters
 	/**
 	 * Get all values in the order they were added.
 	 *
-	 * @return array<mixed> All values.
+	 * @return mixed[] All values.
 	 */
 	public function get_values(): array
 	{

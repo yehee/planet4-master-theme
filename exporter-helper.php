@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 /**
  * Campaign Exporter Helper Functions
@@ -26,26 +23,22 @@ function get_attachments_used_in_content(string $content): array
 		switch ($block['blockName']) {
 			case 'planet4-blocks/enform':
 				$attachment_ids[] = $block['attrs']['background'] ?? '';
-
 				break;
 
 			case 'core/image':
 			case 'planet4-blocks/happypoint':
 				$attachment_ids[] = $block['attrs']['id'] ?? '';
-
 				break;
 
 			case 'planet4-blocks/media-video':
 				$attachment_ids[] = $block['attrs']['video_poster_img'] ?? '';
-
 				break;
 
 			case 'planet4-blocks/gallery':
 				if (isset($block['attrs']['multiple_image'])) {
 					$multiple_images = explode(',', $block['attrs']['multiple_image']);
-					$attachment_ids = array_merge($attachment_ids, $multiple_images);
+					$attachment_ids  = array_merge($attachment_ids, $multiple_images);
 				}
-
 				break;
 
 			case 'planet4-blocks/carousel-header':
@@ -54,32 +47,31 @@ function get_attachments_used_in_content(string $content): array
 						$attachment_ids[] = $slide['image'];
 					}
 				}
-
 				break;
+
 			case 'planet4-blocks/split-two-columns':
 				$attachment_ids[] = $block['attrs']['issue_image'] ?? '';
 				$attachment_ids[] = $block['attrs']['tag_image'] ?? '';
-
 				break;
+
 			case 'planet4-blocks/columns':
 				if (isset($block['attrs']['columns'])) {
 					foreach ($block['attrs']['columns'] as $column) {
 						$attachment_ids[] = $column['attachment'] ?? '';
 					}
 				}
-
 				break;
+
 			case 'planet4-blocks/social-media-cards':
 				if (isset($block['attrs']['cards'])) {
 					foreach ($block['attrs']['cards'] as $card) {
 						$attachment_ids[] = $card['image_id'];
 					}
 				}
-
 				break;
+
 			case 'planet4-blocks/take-action-boxout':
 				$attachment_ids[] = $block['attrs']['background_image'] ?? '';
-
 				break;
 		}
 	}
@@ -91,9 +83,9 @@ function get_attachments_used_in_content(string $content): array
  * Returns all attachment ids from campaign post content.
  *
  * @param array $post_ids Post IDs.
- * @return array $post_ids Post IDs.
+ * @return array  $post_ids Post IDs.
  */
-function get_campaign_attachments(array $post_ids): array
+function get_campaign_attachments($post_ids)
 {
 
 	global $wpdb;
@@ -108,18 +100,16 @@ function get_campaign_attachments(array $post_ids): array
 		WHERE post_type = \'attachment\'
 		AND post_parent IN (' . generate_list_placeholders($post_ids, 2) . ')';
 
-	$prepared_sql = $wpdb->prepare(
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$sql,
-		array_merge([$wpdb->posts], $post_ids),
+	$prepared_sql   = $wpdb->prepare(
+		$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		array_merge([ $wpdb->posts ], $post_ids)
 	);
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$results = $wpdb->get_results($prepared_sql);
+	$results        = $wpdb->get_results($prepared_sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	$attachment_ids = array_map(
-		static function ($result) {
+		function ($result) {
 			return $result->id;
 		},
-		$results,
+		$results
 	);
 
 	/**
@@ -132,21 +122,19 @@ function get_campaign_attachments(array $post_ids): array
 		AND post_id IN(' . generate_list_placeholders($post_ids, 2) . ')';
 
 	$prepared_sql = $wpdb->prepare(
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		$sql,
-		array_merge([$wpdb->postmeta], $post_ids),
+		$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		array_merge([ $wpdb->postmeta ], $post_ids)
 	);
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$results = $wpdb->get_results($prepared_sql);
+	$results      = $wpdb->get_results($prepared_sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 	$attachment_ids = array_merge(
 		$attachment_ids,
 		array_map(
-			static function ($result) {
+			function ($result) {
 				return $result->meta_value;
 			},
-			$results,
-		),
+			$results
+		)
 	);
 
 	$sql = '
@@ -155,16 +143,11 @@ function get_campaign_attachments(array $post_ids): array
 			WHERE ID IN(' . generate_list_placeholders($post_ids, 2) . ')
 			AND post_content REGEXP \'((wp-image-|wp-att-)[0-9][0-9]*)|gallery_block_style|wp\:planet4\-blocks|href=|src=\'';
 
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$prepared_sql = $wpdb->prepare(
-		$sql,
-		array_merge([$wpdb->posts], $post_ids),
-	);
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$results = $wpdb->get_results($prepared_sql);
+	$prepared_sql = $wpdb->prepare($sql, array_merge([ $wpdb->posts ], $post_ids)); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	$results      = $wpdb->get_results($prepared_sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 	foreach ((array) $results as $text) {
-		$text = $text->post_content;
+		$text           = $text->post_content;
 		$attachment_ids = array_merge($attachment_ids, get_attachments_used_in_content($text));
 	}
 
@@ -173,7 +156,7 @@ function get_campaign_attachments(array $post_ids): array
 
 	// The post ids are reordered as sort all attachment ids first and then append the post id to array.(Added for simplification of import process).
 	$attachment_ids = array_diff($attachment_ids, $post_ids);
-	$post_ids = array_merge($attachment_ids, $post_ids);
+	$post_ids       = array_merge($attachment_ids, $post_ids);
 
 	return $post_ids;
 }
@@ -183,12 +166,11 @@ function get_campaign_attachments(array $post_ids): array
  *
  * @param string $str String to replace.
  */
-function p4_px_single_post_cdata(string $str)
+function p4_px_single_post_cdata($str)
 {
 	if (seems_utf8($str) === false) {
 		$str = utf8_encode($str);
 	}
-
 	$str = '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $str) . ']]>';
 
 	return $str;
@@ -199,9 +181,11 @@ function p4_px_single_post_cdata(string $str)
  */
 function p4_px_single_post_site_url()
 {
-	return is_multisite()
-		? network_home_url()
-		: get_bloginfo_rss('url');
+	if (is_multisite()) {
+		return network_home_url();
+	} else {
+		return get_bloginfo_rss('url');
+	}
 }
 
 /**
@@ -209,14 +193,12 @@ function p4_px_single_post_site_url()
  *
  * @param array $post_ids Tag object.
  */
-function p4_px_single_post_authors_list(array $post_ids): void
+function p4_px_single_post_authors_list($post_ids)
 {
 	global $wpdb;
 
-	// santize the post_ids manually.
-	$post_ids = array_map('intval', $post_ids);
-	// strip ones that didn't validate.
-	$post_ids = array_filter($post_ids);
+	$post_ids = array_map('intval', $post_ids);  // santize the post_ids manually.
+	$post_ids = array_filter($post_ids); // strip ones that didn't validate.
 
 	$authors = [];
 
@@ -224,13 +206,8 @@ function p4_px_single_post_authors_list(array $post_ids): void
 			FROM %1$s
 			WHERE ID IN(' . generate_list_placeholders($post_ids, 2) . ') AND post_status != \'auto-draft\'';
 
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$prepared_sql = $wpdb->prepare(
-		$sql,
-		array_merge([$wpdb->posts], $post_ids),
-	);
-    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-	$results = $wpdb->get_results($prepared_sql);
+	$prepared_sql = $wpdb->prepare($sql, array_merge([ $wpdb->posts ], $post_ids)); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+	$results      = $wpdb->get_results($prepared_sql); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 	foreach ((array) $results as $result) {
 		$authors[] = get_userdata($result->post_author);

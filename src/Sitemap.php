@@ -1,14 +1,6 @@
 <?php
 
-declare(strict_types = 1);
-
 namespace P4\MasterTheme;
-
-use function absint;
-use function get_option;
-use function get_permalink;
-use function get_posts;
-use function is_array;
 
 /**
  * Class Sitemap
@@ -28,30 +20,29 @@ class Sitemap
 	 */
 	public function get_actions(): array
 	{
-		$options = get_option('planet4_options');
+		$options   = get_option('planet4_options');
 		$parent_id = $options['act_page'];
-		$actions = [];
+		$actions   = [];
 
 		if (0 !== absint($parent_id)) {
-			$args = [
-				'post_type' => 'page',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'orderby' => 'post_title',
-				'order' => 'ASC',
+			$args    = [
+				'post_type'        => 'page',
+				'post_status'      => 'publish',
+				'post_parent'      => $parent_id,
+				'orderby'          => 'post_title',
+				'order'            => 'ASC',
 				'suppress_filters' => false,
-				'numberposts' => -1,
+				'numberposts'      => -1,
 			];
 			$actions = get_posts($args);
 		}
 
 		$actions_data = [];
-
 		if (is_array($actions) && $actions) {
 			foreach ($actions as $action) {
 				$actions_data[] = [
 					'title' => $action->post_title,
-					'link' => get_permalink($action->ID),
+					'link'  => get_permalink($action->ID),
 				];
 			}
 		}
@@ -66,32 +57,31 @@ class Sitemap
 	 */
 	public function get_issues(): array
 	{
-		$options = \get_option('planet4_options');
+		$options   = get_option('planet4_options');
 		$parent_id = $options['explore_page'];
-		$issues = [];
+		$issues    = [];
 
-		if (\absint($parent_id) !== 0) {
-			$args = [
-				'post_type' => 'page',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'orderby' => 'post_title',
-				'order' => 'ASC',
+		if (0 !== absint($parent_id)) {
+			$args   = [
+				'post_type'        => 'page',
+				'post_status'      => 'publish',
+				'post_parent'      => $parent_id,
+				'orderby'          => 'post_title',
+				'order'            => 'ASC',
 				'suppress_filters' => false,
-				'numberposts' => -1,
+				'numberposts'      => -1,
 			];
-			$issues = \get_posts($args);
+			$issues = get_posts($args);
 		}
 
 		$issues_data = [];
-
-		if (\is_array($issues) && $issues) {
+		if (is_array($issues) && $issues) {
 			foreach ($issues as $issue) {
 				// Get campaigns for this issue.
 				$page_tags = wp_get_post_tags($issue->ID);
-				$tags = [];
+				$tags      = [];
 
-				if (\is_array($page_tags) && $page_tags) {
+				if (is_array($page_tags) && $page_tags) {
 					foreach ($page_tags as $page_tag) {
 						$tags[] = [
 							'name' => $page_tag->name,
@@ -101,8 +91,8 @@ class Sitemap
 				}
 
 				$issues_data[] = [
-					'title' => $issue->post_title,
-					'link' => \get_permalink($issue->ID),
+					'title'     => $issue->post_title,
+					'link'      => get_permalink($issue->ID),
 					'campaigns' => $tags,
 				];
 			}
@@ -119,25 +109,24 @@ class Sitemap
 	public function get_evergreen_pages(): array
 	{
 
-		$args = [
-			'post_type' => 'page',
-			'post_status' => 'publish',
-			'meta_key' => '_wp_page_template',
-			'meta_value' => 'page-templates/evergreen.php',
-			'orderby' => 'post_title',
-			'order' => 'ASC',
+		$args  = [
+			'post_type'        => 'page',
+			'post_status'      => 'publish',
+			'meta_key'         => '_wp_page_template',
+			'meta_value'       => 'page-templates/evergreen.php',
+			'orderby'          => 'post_title',
+			'order'            => 'ASC',
 			'suppress_filters' => false,
-			'numberposts' => self::MAX_EVERGREEN_PAGES,
+			'numberposts'      => self::MAX_EVERGREEN_PAGES,
 		];
 		$pages = get_posts($args);
 
 		$evergreen_data = [];
-
 		if (is_array($pages) && $pages) {
 			foreach ($pages as $page) {
 				$evergreen_data[] = [
 					'title' => $page->post_title,
-					'link' => get_permalink($page->ID),
+					'link'  => get_permalink($page->ID),
 				];
 			}
 		}
@@ -156,13 +145,12 @@ class Sitemap
 		$article_types = get_terms(
 			[
 				'hide_empty' => false,
-				'orderby' => 'name',
-				'taxonomy' => 'p4-page-type',
-			],
+				'orderby'    => 'name',
+				'taxonomy'   => 'p4-page-type',
+			]
 		);
 
 		$article_types_data = [];
-
 		if (is_array($article_types) && $article_types) {
 			foreach ($article_types as $article_type) {
 				$article_types_data[] = [
@@ -174,5 +162,4 @@ class Sitemap
 
 		return $article_types_data;
 	}
-
 }

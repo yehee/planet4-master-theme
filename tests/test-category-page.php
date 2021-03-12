@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 /**
  * Category Page Test Class
@@ -23,27 +20,24 @@ class CategoryPageTest extends P4_TestCase
 	/**
 	 * Test tease taxonomy post template with a post having category, tag and page_type.
 	 */
-	public function test_tease_taxonomy_post_template_with_category_tag_and_page_type(): void
+	public function test_tease_taxonomy_post_template_with_category_tag_and_page_type()
 	{
 
 		// Get editor user.
 		$user = get_user_by('login', 'p4_author');
 		wp_set_current_user($user->ID);
 
-		$post_data = $this->get_posts()['post_with_category_tag_custom_term'];
-		$post = $this->factory->post->create_and_get($post_data);
-		$attachment_id = $this->factory->attachment->create_upload_object(
-			dirname(__DIR__) . '/tests/data/images/pressmedia.jpg',
-			0,
-		);
+		$post_data     = $this->get_posts()['post_with_category_tag_custom_term'];
+		$post          = $this->factory->post->create_and_get($post_data);
+		$attachment_id = $this->factory->attachment->create_upload_object(dirname(__DIR__) . '/tests/data/images/pressmedia.jpg', 0);
 		set_post_thumbnail($post, $attachment_id);
 
 		// Wrap WP_Post around Post.
-		$post = new Post($post->ID);
+		$post   = new Post($post->ID);
 		$output = TimberHelper::ob_function(
-			static function () use ($post): void {
-					Timber::render('tease-taxonomy-post.twig', ['post' => $post]);
-			},
+			function () use ($post) {
+					Timber::render('tease-taxonomy-post.twig', [ 'post' => $post ]);
+			}
 		);
 
 		// Test image markup.
@@ -53,20 +47,29 @@ class CategoryPageTest extends P4_TestCase
 				'alt' => $post->post_title,
 			],
 			$output,
-			'Did not find post thumbnail.',
+			'Did not find post thumbnail.'
 		);
 
 		// Test tag markup.
-		$this->assertContainsSelector('a.search-result-item-tag', $output, 'The template does not contain tag markup');
+		$this->assertContainsSelector(
+			'a.search-result-item-tag',
+			$output,
+			'The template does not contain tag markup'
+		);
 
 		// Test page type markup.
-		$this->assertElementContains('Story', 'a.page-type', $output, 'The template does not contain page type markup');
+		$this->assertElementContains(
+			'Story',
+			'a.page-type',
+			$output,
+			'The template does not contain page type markup'
+		);
 	}
 
 	/**
 	 * Test tease taxonomy post template with a post having category, tag but not page_type term.
 	 */
-	public function test_tease_taxonomy_post_template_with_category_tag(): void
+	public function test_tease_taxonomy_post_template_with_category_tag()
 	{
 
 		// Get editor user.
@@ -74,18 +77,22 @@ class CategoryPageTest extends P4_TestCase
 		wp_set_current_user($user->ID);
 
 		$post_data = $this->get_posts()['post_with_category_tag'];
-		$post = $this->factory->post->create_and_get($post_data);
+		$post      = $this->factory->post->create_and_get($post_data);
 
 		// Wrap WP_Post around Post.
-		$post = new Post($post->ID);
+		$post   = new Post($post->ID);
 		$output = TimberHelper::ob_function(
-			static function () use ($post): void {
-					Timber::render('tease-taxonomy-post.twig', ['post' => $post]);
-			},
+			function () use ($post) {
+					Timber::render('tease-taxonomy-post.twig', [ 'post' => $post ]);
+			}
 		);
 
 		// Test tag markup.
-		$this->assertContainsSelector('a.search-result-item-tag', $output, 'The template does not contain tag markup');
+		$this->assertContainsSelector(
+			'a.search-result-item-tag',
+			$output,
+			'The template does not contain tag markup'
+		);
 
 		// Test page type markup.
 		// Should assert true, every post gets a p4 page type term assigned to it.
@@ -95,14 +102,14 @@ class CategoryPageTest extends P4_TestCase
 	/**
 	 * Test category php template and category twig template.
 	 */
-	public function test_category_page_results(): void
+	public function test_category_page_results()
 	{
 
 		$user = get_user_by('login', 'p4_author');
 		wp_set_current_user($user->ID);
 
 		$post_data = $this->get_posts()['post_with_category_tag_custom_term'];
-		$posts = $this->factory->post->create_many(10, $post_data);
+		$posts     = $this->factory->post->create_many(10, $post_data);
 
 		// Get the ID of the nature category.
 		$category_id = get_cat_ID('Nature');
@@ -114,56 +121,58 @@ class CategoryPageTest extends P4_TestCase
 		$this->assertTrue(is_category());
 
 		$output = TimberHelper::ob_function(
-			static function (): void {
+			function () {
 					include get_template_directory() . '/category.php';
-			},
+			}
 		);
 
 		// Test that contains 10 posts in the markup.
 		$this->assertSelectorCount(10, 'li.search-result-list-item', $output);
 	}
 
+
 	/**
 	 * Provide posts data to be used by wp factories.
 	 *
 	 * @return array
 	 */
-	public function get_posts(): array
+	public function get_posts()
 	{
+
 		return [
 
 			'post_with_category_tag_custom_term' => [
-				'post_type' => 'post',
-				'post_title' => 'The name of the place is Babylon',
-				'post_name' => 'test-social-url',
-				'post_content' => 'test content',
+				'post_type'     => 'post',
+				'post_title'    => 'The name of the place is Babylon',
+				'post_name'     => 'test-social-url',
+				'post_content'  => 'test content',
 				'post_category' => [
 					get_category_by_slug('nature')->term_id,
 				],
-				'tags_input' => [
+				'tags_input'    => [
 					'arcticsunrise',
 				],
-				'tax_input' => [
+				'tax_input'     => [
 					'p4-page-type' => [ 'story' ],
 				],
 			],
-			'post_with_category_tag' => [
-				'post_type' => 'post',
-				'post_title' => 'The name of the place is Babylon',
-				'post_name' => 'test-social-url',
-				'post_content' => 'test content',
+			'post_with_category_tag'             => [
+				'post_type'     => 'post',
+				'post_title'    => 'The name of the place is Babylon',
+				'post_name'     => 'test-social-url',
+				'post_content'  => 'test content',
 				'post_category' => [
 					get_category_by_slug('nature')->term_id,
 				],
-				'tags_input' => [
+				'tags_input'    => [
 					'arcticsunrise',
 				],
 			],
-			'post_with_category' => [
-				'post_type' => 'post',
-				'post_title' => 'The name of the place is Babylon',
-				'post_name' => 'test-social-url',
-				'post_content' => 'test content',
+			'post_with_category'                 => [
+				'post_type'     => 'post',
+				'post_title'    => 'The name of the place is Babylon',
+				'post_name'     => 'test-social-url',
+				'post_content'  => 'test content',
 				'post_category' => [
 					get_category_by_slug('nature')->term_id,
 				],

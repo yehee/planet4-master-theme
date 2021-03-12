@@ -1,21 +1,12 @@
-<?php 
-
-
-declare(strict_types = 1);
+<?php
 
 namespace P4\MasterTheme;
 
-use function add_filter;
-use function array_values;
-
 use UnexpectedValueException;
-use function simple_value_filter;
-use function planet4_get_option;
 
 /**
  * Class P4\MasterTheme\ElasticSearch
  */
-
 class ElasticSearch extends Search
 {
 
@@ -23,9 +14,10 @@ class ElasticSearch extends Search
 	 * Applies user selected filters to the search if there are any and gets the filtered posts.
 	 *
 	 * @param array $args Query args.
-	 * @throws \UnexpectedValueException When filter type is not recognized.
+	 *
+	 * @throws UnexpectedValueException When filter type is not recognized.
 	 */
-	public function set_filters_args(array &$args): void
+	public function set_filters_args(&$args)
 	{
 		parent::set_filters_args($args);
 
@@ -34,49 +26,38 @@ class ElasticSearch extends Search
 				foreach ($filter_type as $filter) {
 					switch ($type) {
 						case 'cat':
-
 						case 'tag':
-
 						case 'ptype':
 							break;
-
 						case 'ctype':
 							switch ($filter['id']) {
 								case 0:
-
 								case 1:
 									break;
-
 								case 2:
 									// Workaround for making 'post_parent__not_in' to work with ES.
-									\add_filter(
+									add_filter(
 										'ep_formatted_args',
-										static function ($formatted_args) use ($args) {
+										function ($formatted_args) use ($args) {
 											// Make sure it is not an Action page.
 											if (! empty($args['post_parent__not_in'])) {
 												$formatted_args['post_filter']['bool']['must_not'][] = [
 													'terms' => [
-														'post_parent' => \array_values(
-															(array) $args['post_parent__not_in'],
-														),
+														'post_parent' => array_values((array) $args['post_parent__not_in']),
 													],
 												];
 											}
-
 											return $formatted_args;
 										},
 										10,
-										1,
+										1
 									);
-
 									break;
-
 								case 3:
-
 								case 4:
 									add_filter(
 										'ep_formatted_args',
-										static function ($formatted_args) use ($args) {
+										function ($formatted_args) use ($args) {
 											// Make sure it is a Post.
 											if (! empty($args['post_type'])) {
 												$formatted_args['post_filter']['bool']['must'][] = [
@@ -85,26 +66,20 @@ class ElasticSearch extends Search
 													],
 												];
 											}
-
 											return $formatted_args;
 										},
 										10,
-										1,
+										1
 									);
-
 									break;
-
 								case 5:
 									break;
-
 								default:
-									throw new \UnexpectedValueException('Unexpected content type!');
+									throw new UnexpectedValueException('Unexpected content type!');
 							}
-
 							break;
-
 						default:
-							throw new \UnexpectedValueException('Unexpected filter!');
+							throw new UnexpectedValueException('Unexpected filter!');
 					}
 				}
 			}
@@ -116,20 +91,20 @@ class ElasticSearch extends Search
 	 *
 	 * @param array $args The array with the arguments that will be passed to WP_Query.
 	 */
-	public function set_engines_args(array &$args): void
+	public function set_engines_args(&$args)
 	{
 		$args['ep_integrate'] = true;
-		\simple_value_filter('epwr_scale', \planet4_get_option('epwr_scale', '28d'));
+		simple_value_filter('epwr_scale', planet4_get_option('epwr_scale', '28d'));
 		simple_value_filter('epwr_decay', planet4_get_option('epwr_decay', 0.5));
 		simple_value_filter('epwr_offset', planet4_get_option('epwr_offset', '365d'));
 
-		add_filter('ep_formatted_args', [$this, 'set_full_text_search'], 19, 1);
-		add_filter('ep_formatted_args', [$this, 'set_results_weight'], 20, 1);
+		add_filter('ep_formatted_args', [ $this, 'set_full_text_search' ], 19, 1);
+		add_filter('ep_formatted_args', [ $this, 'set_results_weight' ], 20, 1);
 
-		add_filter('ep_formatted_args', [$this, 'add_mime_type_filter'], 21, 1);
+		add_filter('ep_formatted_args', [ $this, 'add_mime_type_filter' ], 21, 1);
 
-		if (! \wp_doing_ajax()) {
-			add_filter('ep_formatted_args', [$this, 'add_aggregations'], 999, 1);
+		if (! wp_doing_ajax()) {
+			add_filter('ep_formatted_args', [ $this, 'add_aggregations' ], 999, 1);
 		}
 	}
 
@@ -137,6 +112,7 @@ class ElasticSearch extends Search
 	 * Apply full-text search.
 	 *
 	 * @param mixed $formatted_args Assoc array with the args that ES expects.
+	 *
 	 * @return mixed
 	 */
 	public function set_full_text_search($formatted_args)
@@ -159,6 +135,7 @@ class ElasticSearch extends Search
 	 * Apply custom weight to search results.
 	 *
 	 * @param mixed $formatted_args Assoc array with the args that ES expects.
+	 *
 	 * @return mixed
 	 */
 	public function set_results_weight($formatted_args)
@@ -169,7 +146,7 @@ class ElasticSearch extends Search
 		unset($formatted_args['query']);
 		$formatted_args['query']['function_score']['query'] = $existing_query;
 
-		$options = \get_option('planet4_options');
+		$options = get_option('planet4_options');
 
 		/**
 		 * Use any combination of filters here, any matched filter will adjust
@@ -187,7 +164,7 @@ class ElasticSearch extends Search
 			[
 				'filter' => [
 					'term' => [
-						'post_parent' => \esc_sql($options['act_page']),
+						'post_parent' => esc_sql($options['act_page']),
 					],
 				],
 				'weight' => self::DEFAULT_ACTION_WEIGHT,
@@ -209,31 +186,31 @@ class ElasticSearch extends Search
 	 * However due to the complexity of the current setup (we use ElasticPress which creates the ES query based on
 	 * the WP query, and we apply modifications to both queries) this is not easy to change.
 	 *
-	 * @param array $formatted_args The query that is going to ES.
+	 * @param  array $formatted_args The query that is going to ES.
 	 * @return array The same query, but with added aggregations.
 	 */
-	public function add_aggregations(array $formatted_args): array
+	public function add_aggregations($formatted_args)
 	{
 		$formatted_args['aggs'] = [
 			'with_post_filter' => [
 				'filter' => $formatted_args['post_filter'],
-				'aggs' => [
-					'post_type' => [
+				'aggs'   => [
+					'post_type'    => [
 						'terms' => [
 							'field' => 'post_type.raw',
 						],
 					],
-					'post_parent' => [
+					'post_parent'  => [
 						'terms' => [
 							'field' => 'post_parent',
 						],
 					],
-					'categories' => [
+					'categories'   => [
 						'terms' => [
 							'field' => 'terms.category.term_id',
 						],
 					],
-					'tags' => [
+					'tags'         => [
 						'terms' => [
 							'field' => 'terms.post_tag.term_id',
 						],
@@ -256,7 +233,7 @@ class ElasticSearch extends Search
 	 * @param array $formatted_args The args that are going to ES.
 	 * @return array Same args with added filter.
 	 */
-	public function add_mime_type_filter(array $formatted_args): array
+	public function add_mime_type_filter($formatted_args)
 	{
 
 		$formatted_args['post_filter']['bool']['must'][] = [
@@ -282,5 +259,4 @@ class ElasticSearch extends Search
 
 		return $formatted_args;
 	}
-
 }

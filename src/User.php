@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 namespace P4\MasterTheme;
 
@@ -28,53 +25,69 @@ class User extends Timber\User
 	 * @param object|int|bool $uid The User id.
 	 * @param string          $author_override The author override display name.
 	 */
-	public function __construct($uid = false, string $author_override = '')
+	public function __construct($uid = false, $author_override = '')
 	{
 		if (! $author_override) {
 			parent::__construct($uid);
 		} else {
 			$this->display_name = $author_override;
-			$this->is_fake = true;
+			$this->is_fake      = true;
 		}
 	}
 
 	/**
 	 * The User profile page url.
+	 *
+	 * @return string
 	 */
 	public function link(): string
 	{
-		return $this->is_fake
-			? '#'
-			: parent::link();
+		if ($this->is_fake) {
+			return '#';
+		} else {
+			return parent::link();
+		}
 	}
 
 	/**
 	 * The relative path of the User profile page.
+	 *
+	 * @return string
 	 */
 	public function path(): string
 	{
-		return $this->is_fake
-			? '#'
-			: parent::path();
+		if ($this->is_fake) {
+			return '#';
+		} else {
+			return parent::path();
+		}
 	}
 
 	/**
 	 * Author display name.
+	 *
+	 * @return string
 	 */
 	public function name(): ?string
 	{
-		return $this->is_fake
-			? (string) $this->display_name
-			: parent::name();
+		if ($this->is_fake) {
+			return (string) $this->display_name;
+		} else {
+			return parent::name();
+		}
 	}
 
 	/**
 	 * Stringifies the User object.
+	 *
+	 * @return null|string
 	 */
-	public function __toString(): ?string
+	public function __toString()
 	{
-		return $this->is_fake
-			? $this->name()
-			: parent::__toString();
+		if ($this->is_fake) {
+			return $this->name();
+		} else {
+			return parent::__toString();
+		}
 	}
 }

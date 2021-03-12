@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 namespace P4\MasterTheme;
 
@@ -12,26 +9,36 @@ use DateTime;
  */
 final class MigrationRecord
 {
-
-	/** @var string The id of the script. */
+	/**
+	 * @var string The id of the script.
+	 */
 	private $migration_id;
 
-	/** @var \DateTime The time the script started. */
+	/**
+	 * @var DateTime The time the script started.
+	 */
 	private $start_time;
 
-	/** @var \DateTime The time the script completed. */
+	/**
+	 * @var DateTime The time the script completed.
+	 */
 	private $end_time;
 
-	/** @var bool Whether the script succeeded. */
+	/**
+	 * @var bool Whether the script succeeded.
+	 */
 	private $success;
 
-	/** @var array<string> Log messages which can be added by the running script. */
+	/**
+	 * @var string[] Log messages which can be added by the running script.
+	 */
 	private $logs = [];
 
 	/**
 	 * Get a new record with the current time as start time, to be called just before starting the run.
 	 *
 	 * @param string $migration_id The id of the migration being recorded.
+	 *
 	 * @return self A new record.
 	 */
 	public static function start(string $migration_id): self
@@ -39,7 +46,7 @@ final class MigrationRecord
 		$record = new self();
 
 		$record->migration_id = $migration_id;
-		$record->start_time = new DateTime();
+		$record->start_time   = new DateTime();
 
 		return $record;
 	}
@@ -89,11 +96,11 @@ final class MigrationRecord
 	public function to_log_entry(): array
 	{
 		return [
-			'id' => $this->migration_id,
+			'id'         => $this->migration_id,
 			'start_time' => $this->start_time,
-			'end_time' => $this->end_time,
-			'success' => $this->success,
-			'logs' => $this->logs,
+			'end_time'   => $this->end_time,
+			'success'    => $this->success,
+			'logs'       => $this->logs,
 		];
 	}
 
@@ -116,5 +123,4 @@ final class MigrationRecord
 	{
 		return $this->success;
 	}
-
 }

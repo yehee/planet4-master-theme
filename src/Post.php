@@ -1,28 +1,16 @@
 <?php
 
-declare(strict_types = 1);
-
 namespace P4\MasterTheme;
 
 use Timber\Post as TimberPost;
-use WP_Query;
-use function get_the_terms;
+use Timber\Term as TimberTerm;
 use WP_Error;
+use WP_Query;
+use WP_Term;
 
-use function filter_input;
-
-use const FILTER_SANITIZE_STRING;
-
-use function wp_get_attachment_image_src;
-
-use const INPUT_GET;
-
-use function uniqid;
-use const COOKIEHASH;
 /**
  * Add planet4 specific functionality.
  */
-
 class Post extends TimberPost
 {
 
@@ -43,14 +31,14 @@ class Post extends TimberPost
 	/**
 	 * Page types
 	 *
-	 * @var array<\Timber\Term> $page_types
+	 * @var TimberTerm[] $page_types
 	 */
 	protected $page_types;
 
 	/**
 	 * Author
 	 *
-	 * @var \P4\MasterTheme\User $author
+	 * @var User $author
 	 */
 	protected $author;
 
@@ -69,7 +57,6 @@ class Post extends TimberPost
 	public function __construct($pid = null)
 	{
 		parent::__construct($pid);
-
 		$this->set_page_types();
 		$this->set_author();
 	}
@@ -77,9 +64,9 @@ class Post extends TimberPost
 	/**
 	 * Sets the GTM Data Layer values of current P4 Post.
 	 */
-	public function set_data_layer(): void
+	public function set_data_layer()
 	{
-		if (\is_front_page()) {
+		if (is_front_page()) {
 			$this->data_layer['page_category'] = 'Homepage';
 		} elseif ($this->is_act_page()) {
 			$this->data_layer['page_category'] = 'Act';
@@ -91,7 +78,7 @@ class Post extends TimberPost
 			$this->data_layer['page_category'] = 'Issue Page';
 		} elseif ($this->is_campaign_page()) {
 			$this->data_layer['page_category'] = 'Campaign Page';
-		} elseif (\is_tag()) {
+		} elseif (is_tag()) {
 			$this->data_layer['page_category'] = 'Tag Page';
 		} else {
 			$this->data_layer['page_category'] = 'Default Page';
@@ -108,123 +95,126 @@ class Post extends TimberPost
 
 	/**
 	 * Checks if post is the Act page.
+	 *
+	 * @return bool
 	 */
 	public function is_act_page(): bool
 	{
-		$act_page_id = \planet4_get_option('act_page');
+		$act_page_id = planet4_get_option('act_page');
 
-		return \absint($act_page_id) === $this->id;
+		return absint($act_page_id) === $this->id;
 	}
 
 	/**
 	 * Checks if post is the Explore page.
+	 *
+	 * @return bool
 	 */
 	public function is_explore_page(): bool
 	{
-		$explore_page_id = \planet4_get_option('explore_page');
+		$explore_page_id = planet4_get_option('explore_page');
 
-		return \absint($explore_page_id) === $this->id;
+		return absint($explore_page_id) === $this->id;
 	}
 
 	/**
 	 * Checks if post is a Take Action page (child of act page).
+	 *
+	 * @return bool
 	 */
 	public function is_take_action_page(): bool
 	{
-		$act_page_id = \planet4_get_option('act_page');
-		$pages = [];
+		$act_page_id = planet4_get_option('act_page');
+		$pages       = [];
 
-		if (\absint($act_page_id) !== 0) {
+		if (0 !== absint($act_page_id)) {
 			$take_action_pages_args = [
-				'post_type' => 'page',
-				'post_parent' => $act_page_id,
-				'numberposts' => -1,
-				'fields' => 'ids',
+				'post_type'        => 'page',
+				'post_parent'      => $act_page_id,
+				'numberposts'      => - 1,
+				'fields'           => 'ids',
 				'suppress_filters' => false,
 			];
 
-			$pages = \get_posts($take_action_pages_args);
+			$pages = get_posts($take_action_pages_args);
 		}
 
-		return \in_array($this->id, $pages, true);
+		return in_array($this->id, $pages, true);
 	}
 
 	/**
 	 * Checks if post is an Issue page (child of explore page).
+	 *
+	 * @return bool
 	 */
 	public function is_issue_page(): bool
 	{
-		$explore_page_id = \planet4_get_option('explore_page');
-		$pages = [];
+		$explore_page_id = planet4_get_option('explore_page');
+		$pages           = [];
 
-		if (\absint($explore_page_id) !== 0) {
+		if (0 !== absint($explore_page_id)) {
 			$issue_pages_args = [
-				'post_type' => 'page',
-				'post_parent' => $explore_page_id,
-				'numberposts' => -1,
-				'fields' => 'ids',
+				'post_type'        => 'page',
+				'post_parent'      => $explore_page_id,
+				'numberposts'      => - 1,
+				'fields'           => 'ids',
 				'suppress_filters' => false,
 			];
 
-			$pages = \get_posts($issue_pages_args);
+			$pages = get_posts($issue_pages_args);
 		}
 
-		return \in_array($this->id, $pages, true);
+		return in_array($this->id, $pages, true);
 	}
 
 	/**
 	 * Checks if post is Campaign page.
+	 *
+	 * @return bool
 	 */
 	public function is_campaign_page(): bool
 	{
-		return $this->post_type === PostCampaign::POST_TYPE;
+		return PostCampaign::POST_TYPE === $this->post_type;
 	}
 
 	/**
 	 * Loads in context information on the navigation links for Issue pages relevant to current Post's categories.
 	 */
-	public function set_issues_links(): void
+	public function set_issues_links()
 	{
 		// Retrieve P4 settings in order to check that we add only categories that are children of the Issues category.
-		$options = \get_option('planet4_options');
+		$options         = get_option('planet4_options');
 		$explore_page_id = $options['explore_page'] ?? '';
-		$categories = \get_the_category($this->ID);
+		$categories      = get_the_category($this->ID);
 
 		// Handle navigation links.
-		if (!$categories) {
-			return;
-		}
+		if ($categories) {
+			$categories_ids = [];
 
-		$categories_ids = [];
-
-		foreach ($categories as $category) {
-			$categories_ids[] = $category->term_id;
-		}
-
-		// Get the Issue pages that are relevant to the Categories of the current Post.
-		if (!$categories_ids || !$explore_page_id) {
-			return;
-		}
-
-		$args = [
-			'post_parent' => $explore_page_id,
-			'post_type' => 'page',
-			'post_status' => 'publish',
-		];
-
-		$args['category__in'] = $categories_ids;
-		$issues = ( new WP_Query($args) )->posts;
-
-		if (!$issues) {
-			return;
-		}
-
-		foreach ($issues as $issue) {
-			if ($issue && $this->post_parent !== (int) $explore_page_id) {
-				$this->issues_nav_data[] = [
-					'name' => $issue->post_title,
-					'link' => \get_permalink($issue),
+			foreach ($categories as $category) {
+				$categories_ids[] = $category->term_id;
+			}
+			// Get the Issue pages that are relevant to the Categories of the current Post.
+			if ($categories_ids && $explore_page_id) {
+				$args = [
+					'post_parent' => $explore_page_id,
+					'post_type'   => 'page',
+					'post_status' => 'publish',
 				];
+
+				$args['category__in'] = $categories_ids;
+				$issues               = ( new WP_Query($args) )->posts;
+
+				if ($issues) {
+					foreach ($issues as $issue) {
+						if ($issue && $this->post_parent !== (int) $explore_page_id) {
+							$this->issues_nav_data[] = [
+								'name' => $issue->post_title,
+								'link' => get_permalink($issue),
+							];
+						}
+					}
+				}
 			}
 		}
 	}
@@ -233,9 +223,10 @@ class Post extends TimberPost
 	 * Retrieves the accounts for each social media item found within the footer social menu.
 	 *
 	 * @param array $social_menu Array of a post objects for each menu item.
+	 *
 	 * @return array Associative array with the social media accounts.
 	 */
-	public function get_social_accounts(array $social_menu): array
+	public function get_social_accounts($social_menu): array
 	{
 		return self::filter_social_accounts($social_menu);
 	}
@@ -243,13 +234,12 @@ class Post extends TimberPost
 	/**
 	 * Get post's planet4 custom taxonomy terms.
 	 *
-	 * @return array<\WP_Term>
+	 * @return WP_Term[]
 	 */
-	public function get_custom_terms(): array
+	public function get_custom_terms()
 	{
-		$terms = \get_the_terms($this->id, CustomTaxonomy::TAXONOMY);
-
-		if ($terms !== false && ! $terms instanceof \WP_Error) {
+		$terms = get_the_terms($this->id, CustomTaxonomy::TAXONOMY);
+		if (false !== $terms && ! $terms instanceof WP_Error) {
 			return $terms;
 		}
 
@@ -259,15 +249,13 @@ class Post extends TimberPost
 	/**
 	 * Sets the page types for this Post.
 	 */
-	public function set_page_types(): void
+	public function set_page_types()
 	{
 		$taxonomies = $this->get_terms(CustomTaxonomy::TAXONOMY);
 
-		if (!$taxonomies || \is_wp_error($taxonomies)) {
-			return;
+		if ($taxonomies && ! is_wp_error($taxonomies)) {
+			$this->page_types = $taxonomies;
 		}
-
-		$this->page_types = $taxonomies;
 	}
 
 	/**
@@ -282,47 +270,49 @@ class Post extends TimberPost
 	 * Sets post/page custom planet4 type.
 	 * ACTION, DOCUMENT, PAGE, POST
 	 */
-	public function set_content_type(): void
+	public function set_content_type()
 	{
 		switch ($this->post_type) {
 			case 'page':
-				$this->content_type = $this->is_take_action_page() ? \__('ACTION', 'planet4-master-theme') : \__(
-					'PAGE',
-					'planet4-master-theme',
-				);
-
+				if ($this->is_take_action_page()) {
+					$this->content_type = __('ACTION', 'planet4-master-theme');
+				} else {
+					$this->content_type = __('PAGE', 'planet4-master-theme');
+				}
 				break;
-
 			case 'attachment':
-				$this->content_type = \__('DOCUMENT', 'planet4-master-theme');
-
+				$this->content_type = __('DOCUMENT', 'planet4-master-theme');
 				break;
-
 			default:
-				$this->content_type = \__('POST', 'planet4-master-theme');
+				$this->content_type = __('POST', 'planet4-master-theme');
 		}
 	}
 
 	/**
 	 * Get post/page custom planet4 type.
 	 * ACTION, DOCUMENT, PAGE, POST
+	 *
+	 * @return string
 	 */
-	public function get_content_type(): string
+	public function get_content_type()
 	{
 		return $this->content_type;
 	}
 
 	/**
 	 * Get value for open graph title meta.
+	 *
+	 * @return string
 	 */
-	public function get_og_title(): string
+	public function get_og_title()
 	{
-		$og_title = \get_post_meta($this->id, 'p4_og_title', true);
-
-		if ($og_title === '') {
-			return $this->post_title !== ''
-				? $this->post_title . ' - ' . \get_bloginfo('name')
-				: \get_bloginfo('name');
+		$og_title = get_post_meta($this->id, 'p4_og_title', true);
+		if ('' === $og_title) {
+			if ('' !== $this->post_title) {
+				return $this->post_title . ' - ' . get_bloginfo('name');
+			} else {
+				return get_bloginfo('name');
+			}
 		}
 
 		return $og_title;
@@ -330,16 +320,17 @@ class Post extends TimberPost
 
 	/**
 	 * Get value for open graph description meta.
+	 *
+	 * @return string
 	 */
-	public function get_og_description(): string
+	public function get_og_description()
 	{
-		$og_desc = \get_post_meta($this->id, 'p4_og_description', true);
-
-		if ($og_desc === '') {
+		$og_desc = get_post_meta($this->id, 'p4_og_description', true);
+		if ('' === $og_desc) {
 			return $this->post_excerpt;
 		}
 
-		return \wp_strip_all_tags($og_desc);
+		return wp_strip_all_tags($og_desc);
 	}
 
 	/**
@@ -347,27 +338,24 @@ class Post extends TimberPost
 	 *
 	 * @return array
 	 */
-	public function get_og_image(): array
+	public function get_og_image()
 	{
-		$meta = \get_post_meta($this->id);
-		$image_id = null;
-		$image_metas = ['p4_og_image_id', '_thumbnail_id', 'background_image_id'];
-
+		$meta        = get_post_meta($this->id);
+		$image_id    = null;
+		$image_metas = [ 'p4_og_image_id', '_thumbnail_id', 'background_image_id' ];
 		foreach ($image_metas as $image_meta) {
 			if (isset($meta[ $image_meta ][0])) {
 				$image_id = $meta[ $image_meta ][0];
-
 				break;
 			}
 		}
 
-		if ($image_id !== null) {
-			$image_data = \wp_get_attachment_image_src($image_id, 'full');
-			$og_image = [];
-
+		if (null !== $image_id) {
+			$image_data = wp_get_attachment_image_src($image_id, 'full');
+			$og_image   = [];
 			if ($image_data) {
-				$og_image['url'] = $image_data[0];
-				$og_image['width'] = $image_data[1];
+				$og_image['url']    = $image_data[0];
+				$og_image['width']  = $image_data[1];
 				$og_image['height'] = $image_data[2];
 			}
 
@@ -380,32 +368,33 @@ class Post extends TimberPost
 	/**
 	 * Get values for share buttons content.
 	 *
-	 * @return array<string>
+	 * @return string[]
 	 */
-	public function share_meta(): array
+	public function share_meta()
 	{
-		$og_title = \get_post_meta($this->id, 'p4_og_title', true);
-		$og_description = \get_post_meta($this->id, 'p4_og_description', true);
-		$link = \get_permalink($this->id);
+		$og_title       = get_post_meta($this->id, 'p4_og_title', true);
+		$og_description = get_post_meta($this->id, 'p4_og_description', true);
+		$link           = get_permalink($this->id);
 
-		if (( $og_title === '' ) && $this->post_title !== '') {
+		if (( '' === $og_title ) && '' !== $this->post_title) {
 			$og_title = $this->post_title;
 		}
 
 		return [
-			'title' => $og_title,
-			'description' => \wp_strip_all_tags($og_description),
-			'link' => $link,
+			'title'       => $og_title,
+			'description' => wp_strip_all_tags($og_description),
+			'link'        => $link,
 		];
 	}
 
 	/**
 	 * Get post's author override status.
+	 *
+	 * @return bool
 	 */
-	public function get_author_override(): bool
+	public function get_author_override()
 	{
-		$author_override = \get_post_meta($this->id, 'p4_author_override', true);
-
+		$author_override = get_post_meta($this->id, 'p4_author_override', true);
 		if ($author_override) {
 			return true;
 		}
@@ -416,13 +405,11 @@ class Post extends TimberPost
 	/**
 	 * Sets the User author of this Post.
 	 */
-	public function set_author(): void
+	public function set_author()
 	{
-		$author_override = \get_post_meta($this->id, 'p4_author_override', true);
-
-		if ($author_override !== '') {
-			// Create fake User.
-			$this->author = new User(false, $author_override);
+		$author_override = get_post_meta($this->id, 'p4_author_override', true);
+		if ('' !== $author_override) {
+			$this->author = new User(false, $author_override);     // Create fake User.
 		} else {
 			$this->author = new User((int) $this->post_author);
 		}
@@ -430,10 +417,42 @@ class Post extends TimberPost
 
 	/**
 	 * Gets the User author of this Post.
+	 *
+	 * @return User
 	 */
-	public function get_author(): User
+	public function get_author()
 	{
 		return $this->author;
+	}
+
+	/**
+	 * Filter the accounts for each social media item found within the footer social menu.
+	 *
+	 * @param array $social_menu Array of a post objects for each menu item.
+	 *
+	 * @return array Associative array with the social media accounts.
+	 */
+	public static function filter_social_accounts($social_menu): array
+	{
+		$social_accounts = [];
+		if (isset($social_menu) && is_iterable($social_menu)) {
+			$brands = [
+				'facebook',
+				'twitter',
+				'youtube',
+				'instagram',
+			];
+			foreach ($social_menu as $social_menu_item) {
+				$url_parts = explode('/', rtrim($social_menu_item->url, '/'));
+				foreach ($brands as $brand) {
+					if (false !== strpos($social_menu_item->url, $brand)) {
+						$social_accounts[ $brand ] = count($url_parts) > 0 ? $url_parts[ count($url_parts) - 1 ] : '';
+					}
+				}
+			}
+		}
+
+		return $social_accounts;
 	}
 
 	/**
@@ -447,13 +466,10 @@ class Post extends TimberPost
 		$is_valid = true;
 
 		// Check if page url has a unique id(custom hash), appended with it, if not add one.
-		$custom_hash = \filter_input(\INPUT_GET, 'ch', \FILTER_SANITIZE_STRING);
-
+		$custom_hash = filter_input(INPUT_GET, 'ch', FILTER_SANITIZE_STRING);
 		if (! $custom_hash) {
-			\wp_safe_redirect(
-				\add_query_arg('ch', \password_hash(\uniqid('', true), \PASSWORD_DEFAULT), \get_permalink()),
-			);
-			exit;
+			wp_safe_redirect(add_query_arg('ch', password_hash(uniqid('', true), PASSWORD_DEFAULT), get_permalink()));
+			exit();
 		}
 
 		/**
@@ -461,12 +477,10 @@ class Post extends TimberPost
 		 * The latest entered password is stored as a secure hash in a cookie named 'wp-postpass_' . COOKIEHASH.
 		 * When the password form is called, that cookie has been validated already by WordPress.
 		 */
-		if (isset($_COOKIE[ 'wp-postpass_' . \COOKIEHASH ])) {
-			$old_cookie = \get_transient('p4-postpass_' . $custom_hash);
-			$current_cookie = \wp_unslash($_COOKIE[ 'wp-postpass_' . \COOKIEHASH ]);
-			// Transient cache expires in 5 mins.
-			\set_transient('p4-postpass_' . $custom_hash, $current_cookie, $expiration = 60 * 5);
-
+		if (isset($_COOKIE[ 'wp-postpass_' . COOKIEHASH ])) {
+			$old_cookie     = get_transient('p4-postpass_' . $custom_hash);
+			$current_cookie = wp_unslash($_COOKIE[ 'wp-postpass_' . COOKIEHASH ]);
+			set_transient('p4-postpass_' . $custom_hash, $current_cookie, $expiration = 60 * 5); // Transient cache expires in 5 mins.
 			if (false !== $old_cookie && $current_cookie !== $old_cookie) {
 				$is_valid = false;
 			}
@@ -474,41 +488,4 @@ class Post extends TimberPost
 
 		return $is_valid;
 	}
-
-	/**
-	 * Filter the accounts for each social media item found within the footer social menu.
-	 *
-	 * @param array $social_menu Array of a post objects for each menu item.
-	 * @return array Associative array with the social media accounts.
-	 */
-	public static function filter_social_accounts(array $social_menu): array
-	{
-		$social_accounts = [];
-
-		if (isset($social_menu) && \is_iterable($social_menu)) {
-			$brands = [
-				'facebook',
-				'twitter',
-				'youtube',
-				'instagram',
-			];
-
-			foreach ($social_menu as $social_menu_item) {
-				$url_parts = \explode('/', \rtrim($social_menu_item->url, '/'));
-
-				foreach ($brands as $brand) {
-					if (false === \strpos($social_menu_item->url, $brand)) {
-						continue;
-					}
-
-					$social_accounts[ $brand ] = \count($url_parts) > 0
-						? $url_parts[ \count($url_parts) - 1 ]
-						: '';
-				}
-			}
-		}
-
-		return $social_accounts;
-	}
-
 }

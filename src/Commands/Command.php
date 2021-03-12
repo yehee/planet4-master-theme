@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 namespace P4\MasterTheme\Commands;
 
@@ -12,14 +9,21 @@ use WP_CLI;
  */
 abstract class Command
 {
-
 	/**
-	 * The logic of the command. Has WP_CLI command signature.
+	 * Registers the command.
 	 *
-	 * @param array|null $args Positional arguments.
-	 * @param array|null $assoc_args Named arguments.
+	 * @throws \Exception If WP_CLI doesn't like what we register.
 	 */
-	abstract public static function execute(?array $args, ?array $assoc_args): void;
+	public static function register(): void
+	{
+		WP_CLI::add_command(
+			static::get_name(),
+			[ static::class, 'execute' ],
+			[
+				'shortdesc' => static::get_short_description(),
+			]
+		);
+	}
 
 	/**
 	 * The name to access the command.
@@ -36,18 +40,10 @@ abstract class Command
 	abstract protected static function get_short_description(): string;
 
 	/**
-	 * Registers the command.
+	 * The logic of the command. Has WP_CLI command signature.
 	 *
-	 * @throws \Exception If WP_CLI doesn't like what we register.
+	 * @param array|null $args Positional arguments.
+	 * @param array|null $assoc_args Named arguments.
 	 */
-	public static function register(): void
-	{
-		WP_CLI::add_command(
-			static::get_name(),
-			[static::class, 'execute'],
-			[
-				'shortdesc' => static::get_short_description(),
-			],
-		);
-	}
+	abstract public static function execute(?array $args, ?array $assoc_args): void;
 }

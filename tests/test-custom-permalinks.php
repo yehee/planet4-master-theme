@@ -1,7 +1,4 @@
-<?php 
-
-
-declare(strict_types=1);
+<?php
 
 /**
  * Test p4_page_type terms custom permalinks.
@@ -18,7 +15,7 @@ class CustomPermalinksTest extends P4_TestCase
 	/**
 	 * Test permalink exists
 	 */
-	public function test_p4_page_type_permalink_exists(): void
+	public function test_p4_page_type_permalink_exists()
 	{
 		$available_tags = [
 			// translators: %s = year of the post in four digits.
@@ -31,7 +28,7 @@ class CustomPermalinksTest extends P4_TestCase
 	/**
 	 * Test setting permalink structure to /%p4_page_type%/%post_id%/%postname%/
 	 */
-	public function test_p4_page_type_post_id_postname_permalink_structure(): void
+	public function test_p4_page_type_post_id_postname_permalink_structure()
 	{
 
 		// Set permalink structure.
@@ -43,22 +40,22 @@ class CustomPermalinksTest extends P4_TestCase
 		// Create a take action page.
 		$nature_page = $this->factory->post->create_and_get(
 			[
-				'post_type' => 'page',
-				'post_title' => 'Nature page',
-				'post_name' => 'nature-page',
+				'post_type'    => 'page',
+				'post_title'   => 'Nature page',
+				'post_name'    => 'nature-page',
 				'post_content' => 'test content',
-				'post_parent' => $page->ID,
-			],
+				'post_parent'  => $page->ID,
+			]
 		);
 
 		// Create a sample post and assing p4-page-type story term to it.
 		$post_id = $this->factory->post->create(
 			[
-				'post_type' => 'post',
-				'post_title' => 'The name of the place is Babylon 10.',
-				'post_name' => 'test-taxonomy-url',
+				'post_type'    => 'post',
+				'post_title'   => 'The name of the place is Babylon 10.',
+				'post_name'    => 'test-taxonomy-url',
 				'post_content' => 'test content',
-			],
+			]
 		);
 		wp_set_object_terms($post_id, 'story', 'p4-page-type');
 
@@ -105,7 +102,7 @@ class CustomPermalinksTest extends P4_TestCase
 	/**
 	 * Test setting permalink structure to /%p4_page_type%/%post_id%/
 	 */
-	public function test_p4_page_type_post_id_permalink_structure(): void
+	public function test_p4_page_type_post_id_permalink_structure()
 	{
 
 		$this->set_permalink_structure('/%p4_page_type%/%post_id%/');
@@ -113,11 +110,11 @@ class CustomPermalinksTest extends P4_TestCase
 		// Create example_post.
 		$post = $this->factory->post->create_and_get(
 			[
-				'post_type' => 'post',
-				'post_title' => 'Test p4 page type taxonomy terms in permalinks',
-				'post_name' => 'test-taxonomy-url',
+				'post_type'    => 'post',
+				'post_title'   => 'Test p4 page type taxonomy terms in permalinks',
+				'post_name'    => 'test-taxonomy-url',
 				'post_content' => 'test content',
-			],
+			]
 		);
 		wp_set_object_terms($post->ID, 'story', 'p4-page-type');
 
@@ -137,10 +134,11 @@ class CustomPermalinksTest extends P4_TestCase
 		$this->assertTrue(is_page());
 	}
 
+
 	/**
 	 * Test setting permalink structure to /%p4_page_type%/%postname%/
 	 */
-	public function test_p4_page_type_postname_permalink_structure(): void
+	public function test_p4_page_type_postname_permalink_structure()
 	{
 
 		$this->set_permalink_structure('/%p4_page_type%/%postname%/');
@@ -148,11 +146,11 @@ class CustomPermalinksTest extends P4_TestCase
 		// Create example_post.
 		$post_id = $this->factory->post->create(
 			[
-				'post_type' => 'post',
-				'post_title' => 'Test /%p4_page_type%/%postname%/ permastruct',
-				'post_name' => 'test-taxonomy-url',
+				'post_type'    => 'post',
+				'post_title'   => 'Test /%p4_page_type%/%postname%/ permastruct',
+				'post_name'    => 'test-taxonomy-url',
 				'post_content' => 'test content',
-			],
+			]
 		);
 		wp_set_object_terms($post_id, 'story', 'p4-page-type');
 

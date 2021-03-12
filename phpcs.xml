@@ -1,20 +1,15 @@
 <?xml version="1.0"?>
 <ruleset name="Planet4 Coding Standards">
-  <description>Generally-applicable sniffs for Planet4</description>
+  <description>Generally-applicable sniffs for WordPress plugins</description>
 
+  <arg name="extensions" value="php"/>
   <!-- Show sniffs, progress -->
   <arg value="sp"/>
-  <arg name="extensions" value="php"/>
-  <arg name="tab-width" value="4"/>
   <config name="encoding" value="utf-8"/>
 
   <rule ref="PSR12"/>
-
   <rule ref="WordPress-Docs">
-    <exclude name="Squiz.Commenting.FileComment.Missing"/>
-    <exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
     <exclude name="Generic.Commenting.DocComment.MissingShort"/>
-    <exclude name="Squiz.Commenting.FunctionComment.SpacingAfterParamType"/>
   </rule>
 
   <!-- Deprecated WP features -->
@@ -23,13 +18,6 @@
 	<rule ref="WordPress.WP.DeprecatedClasses"/>
 	<rule ref="WordPress.WP.DeprecatedParameters"/>
 	<rule ref="WordPress.WP.DeprecatedParameterValues"/>
-
-  <!-- Add rule for theme's textdomains -->
-  <rule ref="WordPress.WP.I18n">
-    <properties>
-      <property name="text_domain" type="array" value="planet4-master-theme,planet4-master-theme-backend"/>
-    </properties>
-  </rule>
 
   <!-- Using tabs for WP interactions sake -->
   <rule ref="Generic.WhiteSpace.DisallowSpaceIndent"/>
@@ -44,49 +32,10 @@
     </properties>
   </rule>
 
-  <rule ref="Generic.PHP.CharacterBeforePHPOpeningTag"/>
-  <rule ref="Generic.PHP.DeprecatedFunctions"/>
-
-  <!-- Slevomat Coding Standard -->
-  <!-- # Functional -->
-  <rule ref="SlevomatCodingStandard.TypeHints">
-    <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification"/>
-    <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification"/>
-    <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification"/>
-	</rule>
-  <!-- "declare" structure -->
-  <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
-		<properties>
-			<property name="declareOnFirstLine" value="false"/>
-      <property name="newlinesCountBetweenOpenTagAndDeclare" value="2"/>
-      <property name="spacesCountAroundEqualsSign" value="0"/>
-		</properties>
-	</rule>
-  <rule ref="SlevomatCodingStandard.Classes"/>
-  <rule ref="SlevomatCodingStandard.Classes.EmptyLinesAroundClassBraces">
-		<properties>
-			<property name="linesCountAfterOpeningBrace" value="0"/>
-      <property name="linesCountBeforeClosingBrace" value="0"/>
-		</properties>
-  </rule>
-  <rule ref="SlevomatCodingStandard.ControlStructures.EarlyExit"/>
-  <rule ref="SlevomatCodingStandard.ControlStructures.NewWithParentheses"/>
-  <rule ref="SlevomatCodingStandard.ControlStructures.UselessIfConditionWithReturn"/>
-  <!-- # Clean code -->
-  <rule ref="SlevomatCodingStandard.Namespaces.UseFromSameNamespace"/>
-  <rule ref="SlevomatCodingStandard.Namespaces.UselessAlias"/>
-  <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses"/>
-  <rule ref="SlevomatCodingStandard.Functions.UnusedInheritedVariablePassedToClosure"/>
-  <rule ref="SlevomatCodingStandard.Functions.UnusedParameter"/>
-  <rule ref="SlevomatCodingStandard.Functions.UselessParameterDefaultValue"/>
-  <rule ref="SlevomatCodingStandard.PHP"/>
-  <!-- # Formatting -->
-  <rule ref="SlevomatCodingStandard.Arrays.TrailingArrayComma"/>
-  <rule ref="SlevomatCodingStandard.Commenting.UselessFunctionDocComment"/>
-  <rule ref="Squiz.Strings.ConcatenationSpacing">
+  <!-- Add rule for theme's textdomains -->
+  <rule ref="WordPress.WP.I18n">
     <properties>
-      <property name="spacing" value="1"/>
-      <property name="ignoreNewlines" value="true"/>
+      <property name="text_domain" type="array" value="planet4-master-theme,planet4-master-theme-backend"/>
     </properties>
   </rule>
 
