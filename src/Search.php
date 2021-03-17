@@ -130,6 +130,23 @@ abstract class Search {
 			},
 			20
 		);
+		add_filter(
+			'ep_post_sync_args',
+			function ($post_args, $post_id) {
+				$blocks = parse_blocks( $post_args['post_content'] );
+
+				$post_args['blocks'] = array_map(
+					static function ( $block ) {
+						return [ 'name' => $block['blockName'], 'attributes' => $block['attrs'] ];
+					},
+					$blocks
+				);
+
+				return $post_args;
+			},
+			10,
+			2
+		);
 		// Certain attachments could have these meta keys many times over with the same value, which can cause OOM
 		// when syncing ElasticSearch. We don't need `sm_cloud` in ES and we only need one of `_wp_attachment_image_alt`.
 		add_filter(
