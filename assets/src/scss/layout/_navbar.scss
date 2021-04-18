@@ -97,11 +97,22 @@ $navbar-default-height: 60px;
 .btn-navbar-toggle {
   line-height: 2rem;
   margin: 11px;
-  color: $white;
   z-index: 1;
 
   .icon {
     font-size: $font-size-md;
+  }
+}
+
+.btn-navbar-toggle {
+  _-- {
+    color: $white;
+  }
+}
+
+.navbar-search-toggle {
+  _-- {
+    color: $white;
   }
 }
 
