@@ -16,7 +16,10 @@
       padding: 11px $n30;
       text-transform: uppercase;
       text-decoration: none;
-      color: $grey-80;
+
+      _-- {
+        color: $grey-80;
+      }
       font-weight: bold;
       position: relative;
       font-size: $font-size-sm;
@@ -120,18 +123,24 @@
       height: 40px;
       width: 130px;
       line-height: 40px;
-      background: $orange;
-      padding: 0 $n10;
-      color: $white;
+      border-style: solid;
+
+      --filters-button-- {
+        border-color: transparent;
+        border-width: 0;
+        background: $orange;
+        color: $white;
+        padding: 0 $n10;
+
+        &:hover {
+          color: $grey-80;
+          cursor: pointer;
+        }
+      }
 
       svg {
         margin-right: 4px;
         vertical-align: baseline;
-      }
-
-      &:hover {
-        color: $grey-80;
-        cursor: pointer;
       }
 
       .icon-cross {
