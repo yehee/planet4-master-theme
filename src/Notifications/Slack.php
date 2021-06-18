@@ -33,7 +33,7 @@ class Slack extends Abstracts\Carrier {
 		$body_field = new MrkDwnField(
 			[
 				'label'       => __( 'Body', 'notification' ),
-				'description' => __( '<a target="_blank" href="https://api.slack.com/reference/surfaces/formatting#basics">formatting options</a>.', 'notification' ),
+				'description' => '<a target="_blank" class="external-link" href="https://api.slack.com/reference/surfaces/formatting#basics">Learn about message formatting options</a>',
 				'name'        => 'body',
 				'resolvable'  => true,
 				'settings'    => [
