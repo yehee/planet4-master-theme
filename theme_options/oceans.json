@@ -1,6 +1,6 @@
 {
-	"id": "arctic",
-	"name": "Arctic",
+	"id": "oceans",
+	"name": "Oceans",
 	"fields": [
 		{
 			"id": "campaign_logo",
@@ -9,8 +9,8 @@
 				"minimal": {
 					"options": [
 						{
-							"value": "arctic",
-							"label": "Arctic"
+							"value": "oceans",
+							"label": "Oceans"
 						},
 						{
 							"value": "greenpeace",
@@ -18,15 +18,14 @@
 						}
 					],
 					"default": "greenpeace"
-				},
-				"default": "minimal"
+				}
 			}
 		},
 		{
 			"id": "campaign_logo_color",
 			"dependsOn": "campaign_logo",
 			"configurations": {
-				"arctic": {
+				"oceans": {
 					"options": [
 						{
 							"value": "light",
@@ -55,8 +54,7 @@
 						}
 					],
 					"default": "light"
-				},
-				"default": "arctic"
+				}
 			}
 		},
 		{
@@ -81,27 +79,30 @@
 					"options": [
 						{ "value": "#ffffff" },
 						{ "value": "#000000" },
-						{ "value": "#035880" },
-						{ "value": "#00b6c2" }
+						{ "value": "#044362" },
+						{ "value": "#1bb6d6" },
+						{ "value": "#2cabb1" }
 					],
-					"default": "#035880"
-				},
-				"default": "minimal"
+					"default": "#044362"
+				}
 			}
 		},
 		{
 			"id": "campaign_header_color",
 			"options": [
+				{ "value":  "#093944"}
 			]
 		},
 		{
 			"id": "campaign_primary_color",
 			"options": [
+				{ "value":  "#ee562d"}
 			]
 		},
 		{
 			"id": "campaign_secondary_color",
 			"options": [
+				{ "value":  "#093944"}
 			]
 		},
 		{
@@ -124,12 +125,12 @@
 					"label": "Montserrat Light"
 				},
 				{
-					"value": "Sanctuary",
-					"label": "Sanctuary"
-				},
-				{
 					"value": "Roboto",
 					"label": "Roboto"
+				},
+				{
+					"value": "Sanctuary",
+					"label": "Sanctuary"
 				},
 				{
 					"value": "Kanit",
@@ -140,7 +141,7 @@
 					"label": "Save the Arctic"
 				}
 			],
-			"default": "Save the Arctic"
+			"default": "Montserrat"
 		},
 		{
 			"id": "campaign_body_font",
@@ -154,11 +155,11 @@
 					"label": "Sans Serif"
 				},
 				{
-					"value": "Save the Arctic",
-					"label": "Save the Arctic"
+					"value": "Montserrat",
+					"label": "Montserrat"
 				}
 			],
-			"default": "Save the Arctic"
+			"default": "Montserrat"
 		},
 		{
 			"id": "campaign_footer_theme",
@@ -181,10 +182,10 @@
 				"white": {
 					"options": [
 						{ "value": "#1a1a1a" },
-						{ "value": "#035880" },
-						{ "value": "#00b6c2" }
+						{ "value": "#044362" },
+						{ "value": "#2cabb1" }
 					],
-					"default": "#1a1a1a"
+					"default": "#044362"
 				}
 			}
 		}

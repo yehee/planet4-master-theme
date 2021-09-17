@@ -1,6 +1,6 @@
 {
-	"id": "oceans",
-	"name": "Oceans",
+	"id": "plastic",
+	"name": "Plastics",
 	"fields": [
 		{
 			"id": "campaign_logo",
@@ -9,15 +9,15 @@
 				"minimal": {
 					"options": [
 						{
-							"value": "oceans",
-							"label": "Oceans"
+							"value": "plastic",
+							"label": "Plastics"
 						},
 						{
 							"value": "greenpeace",
 							"label": "Greenpeace"
 						}
 					],
-					"default": "greenpeace"
+					"default": "plastic"
 				}
 			}
 		},
@@ -25,7 +25,7 @@
 			"id": "campaign_logo_color",
 			"dependsOn": "campaign_logo",
 			"configurations": {
-				"oceans": {
+				"plastic": {
 					"options": [
 						{
 							"value": "light",
@@ -80,7 +80,8 @@
 						{ "value": "#ffffff" },
 						{ "value": "#000000" },
 						{ "value": "#044362" },
-						{ "value": "#2cabb1" }
+						{ "value": "#2cabb1" },
+            { "value": "#66cc00" }
 					],
 					"default": "#044362"
 				}
@@ -89,19 +90,17 @@
 		{
 			"id": "campaign_header_color",
 			"options": [
-				{ "value":  "#093944"}
-			]
+			],
+			"default": "#000000"
 		},
 		{
 			"id": "campaign_primary_color",
 			"options": [
-				{ "value":  "#ee562d"}
 			]
 		},
 		{
 			"id": "campaign_secondary_color",
 			"options": [
-				{ "value":  "#093944"}
 			]
 		},
 		{

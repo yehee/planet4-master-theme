@@ -1,6 +1,6 @@
 {
-	"id": "antarctic",
-	"name": "Antarctic",
+	"id": "climate",
+	"name": "Climate Emergency",
 	"fields": [
 		{
 			"id": "campaign_logo",
@@ -9,24 +9,23 @@
 				"minimal": {
 					"options": [
 						{
-							"value": "greenpeace",
-							"label": "Greenpeace"
+							"value": "climate",
+							"label": "Climate Emergency"
 						},
 						{
-							"value": "antarctic",
-							"label": "Antarctic"
+							"value": "greenpeace",
+							"label": "Greenpeace"
 						}
 					],
 					"default": "greenpeace"
 				}
-			},
-			"default": "minimal"
+			}
 		},
 		{
 			"id": "campaign_logo_color",
 			"dependsOn": "campaign_logo",
 			"configurations": {
-				"antarctic": {
+				"climate": {
 					"options": [
 						{
 							"value": "light",
@@ -80,10 +79,11 @@
 					"options": [
 						{ "value": "#ffffff" },
 						{ "value": "#000000" },
-						{ "value": "#0a4461" },
-						{ "value": "#52c9f4" }
+						{ "value": "#ff513c" },
+						{ "value": "#007eff" },
+            { "value": "#66cc00" }
 					],
-					"default": "#0a4461"
+					"default": "#ff513c"
 				}
 			}
 		},
@@ -93,12 +93,13 @@
 			]
 		},
 		{
-			"id": "campaign_secondary_color",
+			"id": "campaign_primary_color",
 			"options": [
+				{ "value": "#66cc00" }
 			]
 		},
 		{
-			"id": "campaign_primary_color",
+			"id": "campaign_secondary_color",
 			"options": [
 			]
 		},
@@ -138,7 +139,28 @@
 					"label": "Save the Arctic"
 				}
 			],
-			"default": "Sanctuary"
+			"default": "Jost"
+		},
+		{
+			"id": "campaign_header_secondary",
+			"options": [
+				{
+					"value": "monsterrat_semi",
+					"label": "Montserrat Semi Bold"
+				},
+				{
+					"value": "kanit_semi",
+					"label": "Kanit Semi Bold"
+				},
+				{
+					"value": "open_sans",
+					"label": "Open Sans"
+				},
+				{
+					"value": "open_sans_shadows",
+					"label": "Open Sans Shadows"
+				}
+			]
 		},
 		{
 			"id": "campaign_body_font",
@@ -152,11 +174,11 @@
 					"label": "Sans Serif"
 				},
 				{
-					"value": "sanctuary",
-					"label": "Sanctuary"
+					"value": "Jost",
+					"label": "Jost"
 				}
 			],
-			"default": "sanctuary"
+			"default": "Jost"
 		},
 		{
 			"id": "campaign_footer_theme",
@@ -179,8 +201,8 @@
 				"white": {
 					"options": [
 						{ "value": "#1a1a1a" },
-						{ "value": "#0a4461" },
-						{ "value": "#52c9f4" }
+						{ "value": "#ff513c" },
+						{ "value": "#007eff" }
 					],
 					"default": "#1a1a1a"
 				}

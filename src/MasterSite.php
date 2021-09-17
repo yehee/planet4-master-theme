@@ -245,6 +245,11 @@ class MasterSite extends TimberSite {
 		// Disable xmlrpc.
 		add_filter( 'xmlrpc_enabled', '__return_false' );
 
+		// WPML plugin & wp-stateless plugin incompatibility fix.
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'sitepress-multilingual-cms/sitepress.php' ) ) {
+			add_filter( 'wp_stateless_media_synced', [ $this, 'copy_gcs_metadata' ], 10, 4 );
+		}
+
 		$this->register_meta_fields();
 	}
 
@@ -1383,23 +1388,14 @@ class MasterSite extends TimberSite {
 	 */
 	private function p4_message(): string {
 		return '<h2>Welcome to the new P4 message board!</h2>
-			<p>Did you already join the community on Slack? Here\'s the Planet 4 channels waiting for you in the Global Workspace 👇
+			<p>New to the Planet 4 platform? Here are some self - paced courses that can help you get up to speed. 👇
 				<ul>
 					<li><span style="margin-right: 3px;">
-						<a href="https://greenpeace.slack.com/archives/C014UMRC4AJ">#p4-general</a> 🌏</span>
-						to learn, ask and share about P4, connect with the community and stay on top of all P4 news</li>
+						<a href="https://greenpeace.studytube.nl/courses/22122">Planet 4 Fundamentals</a> 🌏</span>
+						learn the very basic of Planet 4.</li>
 					<li><span style="margin-right: 3px;">
-						<a href="https://greenpeace.slack.com/archives/C0151L0KKNX">#p4-dev</a> 🚀</span>
-						for all coders, engineers and techies</li>
-					<li><span style="margin-right: 3px;">
-						<a href="https://greenpeace.slack.com/archives/C015E2TGLCR">#p4-design</a> 🎨</span>
-						for all artists, creatives and visual wonders</li>
-					<li><span style="margin-right: 3px;">
-						<a href="https://greenpeace.slack.com/archives/C01672QUA0Z">#web-analytics</a> 📊</span>
-						for all data ninjas</li>
-					<li><span style="margin-right: 3px;">
-						<a href="https://greenpeace.slack.com/archives/C014UMRD3T8">#p4-infra</a> ⚙️</span>
-						for all Matrix architects</li>
+						<a href="https://greenpeace.studytube.nl/courses/23208/planet-4">Planet 4 Power User</a> 🚀</span>
+						a more in-depth course to understand how to manage a P4 website and how to make best use of its engagement features.</li>
 				</ul>
 			</p>';
 	}
@@ -1445,5 +1441,38 @@ class MasterSite extends TimberSite {
 	public function disable_block_directory_endpoint( array $endpoints ): array {
 		unset( $endpoints['/wp/v2/block-directory/search'] );
 		return $endpoints;
+	}
+
+	/**
+	 * Copy WP-Stateless field (`sm_cloud`) to all WPML translations on a media post upload to GCS.
+	 *
+	 * @param array  $metadata       Metadata for the attachment.
+	 * @param string $attachment_id  Attachment ID.
+	 * @param bool   $force          (optional) Whether to force the sync even the file already exist in GCS.
+	 * @param bool   $args           (optional) Whether to only sync the full size image.
+	 *
+	 * @return array Metadata for the attachment.
+	 */
+	public function copy_gcs_metadata( $metadata, $attachment_id, $force, $args ): array {
+
+		global $sitepress;
+		$trid         = $sitepress->get_element_trid( $attachment_id );
+		$translations = $sitepress->get_element_translations( $trid );
+
+		// Get WP-Stateless field.
+		$cloud_meta = get_post_meta( $attachment_id, 'sm_cloud', true );
+
+		if ( $cloud_meta ) {
+			foreach ( $translations as $translation ) {
+				$translation_post_id = $translation->element_id;
+
+				// Set field in other translations that are not the current one.
+				if ( $translation_post_id !== $attachment_id && ! get_post_meta( $translation_post_id, 'sm_cloud', true ) ) {
+					update_post_meta( $translation_post_id, 'sm_cloud', $cloud_meta );
+				}
+			}
+		}
+
+		return $metadata;
 	}
 }

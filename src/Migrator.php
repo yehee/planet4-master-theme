@@ -4,6 +4,8 @@ namespace P4\MasterTheme;
 
 use P4\MasterTheme\Migrations\M001EnableEnFormFeature;
 use P4\MasterTheme\Migrations\M002EnableLazyYoutube;
+use P4\MasterTheme\Migrations\M004UpdateMissingMediaPath;
+use P4\MasterTheme\Migrations\M003UpdateArticlesBlockAttribute;
 
 /**
  * Run any new migration scripts and record results in the log.
@@ -24,6 +26,8 @@ class Migrator {
 		$scripts = [
 			M001EnableEnFormFeature::class,
 			M002EnableLazyYoutube::class,
+			M004UpdateMissingMediaPath::class,
+			M003UpdateArticlesBlockAttribute::class,
 		];
 
 		// Loop migrations and run those that haven't run yet.

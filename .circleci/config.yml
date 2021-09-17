@@ -7,12 +7,19 @@ orbs:
 workflows:
   branch:
     jobs:
-      - php73-tests
-      - frontend-tests
-      - acceptance-tests
-      - commitlint
+      - php73-tests:
+          context: org-global
+      - php74-tests:
+          context: org-global
+      - frontend-tests:
+          context: org-global
+      - acceptance-tests:
+          context: org-global
+      - commitlint:
+          context: org-global
       #- a11y-tests
       - create-zip:
+          context: org-global
           filters:
             tags:
               only: /^v\p{Digit}+\.\p{Digit}+.*/
@@ -86,7 +93,8 @@ job-references:
   p4_instance_conf: &p4_instance_conf
     docker:
       - image: greenpeaceinternational/p4-builder:latest
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     working_directory: /home/circleci/
     environment:
       APP_HOSTNAME: www.planet4.test
@@ -143,14 +151,29 @@ commands:
         type: string
       extract-command:
         type: string
+      env:
+        type: string
+        default: |
+          export BUILD_TAG="build-$(cat /tmp/workspace/var/circle-build-num)"
+          export APP_IMAGE=gcr.io/planet-4-151612/planet4-base-app:${BUILD_TAG}
+          export OPENRESTY_IMAGE=gcr.io/planet-4-151612/planet4-base-openresty:${BUILD_TAG}
     steps:
       - run:
+          name: Setup for test
+          command: |
+            << parameters.env >>
+            make -C planet4-docker-compose ci
+      - run:
           name: << parameters.test-name >>
-          command: << parameters.test-command >>
+          command: |
+            << parameters.env >>
+            << parameters.test-command >>
       - run:
           name: Test - Extract test artifacts
           when: always
-          command: << parameters.extract-command >>
+          command: |
+            << parameters.env >>
+            << parameters.extract-command >>
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
@@ -165,14 +188,27 @@ jobs:
     <<: *php_job
     docker:
       - image: greenpeaceinternational/p4-unit-tests:php7.3
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
       - image: circleci/mysql:5.7.26
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
+
+  php74-tests:
+    <<: *php_job
+    docker:
+      - image: greenpeaceinternational/p4-unit-tests:php7.4
+        auth:
+          <<: *docker_auth
+      - image: circleci/mysql:5.7.26
+        auth:
+          <<: *docker_auth
 
   frontend-tests:
     docker:
       - image: greenpeaceinternational/p4-unit-tests:nodelts
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - checkout
       - run:
@@ -190,7 +226,8 @@ jobs:
   commitlint:
     docker:
       - image: greenpeaceinternational/p4-unit-tests:nodelts
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - checkout
       - run:
@@ -203,16 +240,8 @@ jobs:
       - install-instance
       - run-tests:
           test-name: Test - Run acceptance tests
-          test-command: |
-            export BUILD_TAG="build-$(cat /tmp/workspace/var/circle-build-num)"
-            export APP_IMAGE=gcr.io/planet-4-151612/planet4-base-app:${BUILD_TAG}
-            export OPENRESTY_IMAGE=gcr.io/planet-4-151612/planet4-base-openresty:${BUILD_TAG}
-            make -C planet4-docker-compose ci test
-          extract-command: |
-            export BUILD_TAG="build-$(cat /tmp/workspace/var/circle-build-num)"
-            export APP_IMAGE=gcr.io/planet-4-151612/planet4-base-app:${BUILD_TAG}
-            export OPENRESTY_IMAGE=gcr.io/planet-4-151612/planet4-base-openresty:${BUILD_TAG}
-            make -C planet4-docker-compose ci-extract-artifacts
+          test-command: make -C planet4-docker-compose test
+          extract-command: make -C planet4-docker-compose ci-extract-artifacts
 
   a11y-tests:
     <<: *p4_instance_conf
@@ -220,15 +249,8 @@ jobs:
       - install-instance
       - run-tests:
           test-name: Test - Run accessibility tests
-          test-command: |
-            export BUILD_TAG="build-$(cat /tmp/workspace/var/circle-build-num)"
-            export APP_IMAGE=gcr.io/planet-4-151612/planet4-base-app:${BUILD_TAG}
-            export OPENRESTY_IMAGE=gcr.io/planet-4-151612/planet4-base-openresty:${BUILD_TAG}
-            make -C planet4-docker-compose ci test-pa11y-ci
+          test-command: make -C planet4-docker-compose test-pa11y-ci
           extract-command: |
-            export BUILD_TAG="build-$(cat /tmp/workspace/var/circle-build-num)"
-            export APP_IMAGE=gcr.io/planet-4-151612/planet4-base-app:${BUILD_TAG}
-            export OPENRESTY_IMAGE=gcr.io/planet-4-151612/planet4-base-openresty:${BUILD_TAG}
             make -C planet4-docker-compose ci-extract-a11y-artifacts
             errors=$(jq '.errors' planet4-docker-compose/artifacts/pa11y/pa11y-ci-results.json)
             if [ "$errors" -gt 0 ]; then echo "$errors errors found, see report in artifacts."; else echo "No errors, report available in artifacts."; fi
@@ -238,29 +260,14 @@ jobs:
       GOOGLE_PROJECT_ID: planet-4-151612
     docker:
       - image: greenpeaceinternational/circleci-base:latest
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - attach_workspace:
           at: /tmp/workspace
       - run:
           name: Check if this is for an open PR
-          command: |
-            if [[ $(cat /tmp/workspace/commit-message) =~ ^Merge[[:space:]]pull[[:space:]]request[[:space:]]\#([[:digit:]]+) ]]; then
-              echo "https://github.com/greenpeace/planet4-master-theme/pull/${BASH_REMATCH[1]}" > /tmp/workspace/pr
-              echo "MERGED PR ID: ${BASH_REMATCH[1]}"
-              echo true > /tmp/workspace/is_merge_commit
-            else
-              if [ -z "$CIRCLE_PULL_REQUEST" ];then
-                echo echo "No PR, skipping instance deploy"
-                exit 1
-              fi
-              echo false > /tmp/workspace/is_merge_commit
-              echo $CIRCLE_PULL_REQUEST > /tmp/workspace/pr
-            fi
-      - run:
-          name: Python script deps
-          command: |
-            pip3 install requests requests_oauthlib
+          command: check-pr-exists.sh "$(cat /tmp/workspace/commit-message)"
       - run:
           name: Book instance
           command: |
@@ -289,7 +296,8 @@ jobs:
   comment-pr:
     docker:
       - image: greenpeaceinternational/circleci-base:latest
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - attach_workspace:
           at: /tmp/workspace
@@ -320,7 +328,8 @@ jobs:
   create-zip:
     docker:
       - image: mhart/alpine-node:14
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - run: apk add zip git openssh-client python2 make g++
       - checkout
@@ -368,7 +377,8 @@ jobs:
   publish-zip:
     docker:
       - image: mhart/alpine-node:14
-        auth: &docker_auth
+        auth:
+          <<: *docker_auth
     steps:
       - attach_workspace:
           at: /tmp/workspace

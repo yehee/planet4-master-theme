@@ -32,17 +32,6 @@
     }
   }
 
-  ul, ol {
-
-    @include medium-and-up {
-      margin-bottom: 20px;
-    }
-
-    li:not(:first-child) {
-      padding-top: 10px;
-    }
-  }
-
   h2 {
     margin-bottom: 15px;
     padding-top: 8px;
@@ -249,12 +238,6 @@
 
   q {
     font-style: italic;
-  }
-
-  iframe.instagram-media,
-  .twitter-tweet {
-    width: 500px !important;
-    max-width: 100%;
   }
 }
 
